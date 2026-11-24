@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BarbargAuto" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/barbarg_primary</item>
+        <item name="colorPrimaryVariant">@color/barbarg_primary_variant</item>
+        <item name="colorSecondary">@color/barbarg_secondary</item>
+        <item name="colorPrimary">@color/barbarg_primary</item>
+        <item name="colorPrimaryVariant">@color/barbarg_primary_variant</item>
+        <item name="colorSecondary">@color/barbarg_secondary</item>
+        <item name="android:layoutDirection">rtl</item>
+        <item name="android:textDirection">rtl</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#176B5B</item>
+    </style>
+</resources>
