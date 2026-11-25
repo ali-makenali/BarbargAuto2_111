@@ -1,6 +1,6 @@
 name: Build Barbarg APK
 
-on:
+'on':
   workflow_dispatch:
   push:
     branches: [main, master, version-2.2-dashboard]
@@ -8,8 +8,8 @@ on:
     branches: [main, master]
 
 permissions:
+  actions: read
   contents: read
-
 concurrency:
   group: barbarg-apk-${{ github.ref }}
   cancel-in-progress: true
