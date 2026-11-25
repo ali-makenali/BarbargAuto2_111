@@ -11,8 +11,8 @@ android {
         applicationId = "ir.barbarg.auto"
         minSdk = 23
         targetSdk = 35
-        versionCode = 4
-        versionName = "2.1.1"
+        versionCode = 6
+        versionName = "2.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,6 +42,7 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }

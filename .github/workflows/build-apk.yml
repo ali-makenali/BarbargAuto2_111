@@ -1,37 +1,45 @@
 name: Build Barbarg APK
 
-on:
+'on':
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main, master, version-2.2-dashboard]
   pull_request:
     branches: [main, master]
 
 permissions:
+  actions: read
   contents: read
+concurrency:
+  group: barbarg-apk-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Android lint, tests and APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - name: Check out source
+        uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
-      # Wrapper JAR is intentionally not fabricated. Use a pinned Gradle 8.9
-      # installation until the standard wrapper JAR is generated and committed.
+      # Use an installed Gradle distribution because this repository does not
+      # yet contain the generated Gradle wrapper JAR.
       - name: Set up Gradle 8.9
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
@@ -55,7 +63,8 @@ jobs:
       - name: Verify APK output
         run: test -s app/build/outputs/apk/debug/app-debug.apk
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: Barbarg-Debug-APK
           path: app/build/outputs/apk/debug/app-debug.apk
