@@ -14,16 +14,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v7
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v7
+        uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
@@ -31,9 +31,9 @@ jobs:
       # Wrapper JAR is intentionally not fabricated. Use a pinned Gradle 8.9
       # installation until the standard wrapper JAR is generated and committed.
       - name: Set up Gradle 8.9
-        uses: gradle/actions/setup-gradle@v7
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '7'
+          gradle-version: '8.9'
 
       - name: Verify project layout
         run: |
