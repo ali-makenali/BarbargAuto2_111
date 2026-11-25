@@ -3,7 +3,7 @@ name: Build Barbarg APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main, master, version-2.2-dashboard]
   pull_request:
     branches: [main, master]
 
