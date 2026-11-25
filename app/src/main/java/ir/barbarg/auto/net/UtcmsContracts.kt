@@ -4,10 +4,41 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Kotlin representations of response contracts explicitly present in the
- * supplied UTCMS pages. Wire names are preserved by the parsers below.
- * GPSCnt and BOLGoodCnt are intentionally not fabricated.
+ * Kotlin representations of structures explicitly present in the supplied
+ * UTCMS pages. Wire names are preserved where the contract specifies them.
+ * Serialization is intentionally kept separate until the official wire format is verified.
  */
+
+/**
+ * BOLGoodCnt fields transcribed from the supplied UTCMS page 12.
+ * Image is kept as raw bytes; its wire encoding is not assumed here.
+ */
+data class BOLGoodCnt(
+    val GoodID: Int,
+    val WeightKg: Float,
+    val Value: Float,
+    val PackingTypeID: Int,
+    val GoodtypeID: Int,
+    val Description: String? = null,
+    val Image: ByteArray? = null
+)
+
+/**
+ * GPSCnt fields transcribed from the supplied UTCMS page 12.
+ * The document does not mark any GPS property as mandatory.
+ */
+data class GPSCnt(
+    val Latitude: Float? = null,
+    val Longitude: Float? = null,
+    val Altitude: Float? = null,
+    val Bearing: Float? = null,
+    val NumberOfSatellite: Byte? = null,
+    val PDOP: Byte? = null,
+    val GPSSpeed: Byte? = null,
+    val GPSMaxSpeed: Byte? = null,
+    val GPSTotalTraveledDistance: Int? = null
+)
+
 data class KeyValueCnt(val key: Int, val value: String) {
     companion object {
         fun fromJson(json: JSONObject) = KeyValueCnt(json.optInt("Key"), json.optString("Value"))
