@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
         content.addView(Button(this).apply {
             text = "ذخیره پیش‌نویس روی گوشی"
             setOnClickListener {
-                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "issuerNationalCode", "issueDate", "loadingAddress", "unloadingAddress")
+                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "issuerNationalCode", "issueDate", "senderName", "receiverName", "loadingAddress", "unloadingAddress", "serialNo", "totalPayment")
                 if (required.any { inputs[it]?.text.isNullOrBlank() }) {
                     toast("فیلدهای ضروری خودرو، راننده، مالک و نشانی بارگیری/تخلیه را تکمیل کن.")
                     return@setOnClickListener
