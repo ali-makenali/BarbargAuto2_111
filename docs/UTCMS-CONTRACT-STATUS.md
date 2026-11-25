@@ -20,6 +20,26 @@
 | WS04_EndBOL | پایان حمل | اختلاف نام فیلدهای زمان در صفحات ۱۶ و ۲۶ |
 | WS06_InsertBOLTrack | ثبت موقعیت مسیر | ResponseBOLCnt طبق متن ارسالی |
 
+## اطلاعات پایه نوع بارگیر — صفحه ۲۲
+
+### KeyValueCnt
+- `Key`: کد، `int`
+- `Value`: مقدار/عنوان، `string`
+
+### WS32_GetBaseInfoLoadingType
+امضا:
+`WS32_GetBaseInfoLoadingType(string CompanyCode, int Salt, string HashedValue)`
+
+- پارامترها: `CompanyCode` رشته، `Salt` عدد صحیح، `HashedValue` رشته.
+- پاسخ موفق: آرایه `KeyValueCnt[]`.
+- پاسخ خطا: `ExceptionCnt`.
+- خطاها:
+  - `-1`: خطای ناشناخته
+  - `445031`: دسترسی کاربر به سامانه غیرفعال است
+  - `445003`: ورود ناموفق
+  - `445004`: فیلدهای ورودی باید پر شوند
+- آدرس سرویس در OCR به‌صورت وارونه آمده و با صفحات قبلی ITMBOL هم‌خوانی دارد؛ تا تأیید WSDL به‌عنوان endpoint اجرایی استفاده نمی‌شود.
+
 ## جزئیات عملیات حمل — صفحات ۱۳ و ۱۷
 
 ### WS03_StartBOL
