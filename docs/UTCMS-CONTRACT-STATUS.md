@@ -56,7 +56,23 @@
 
 صفحات ۱۰ و ۱۱ نام و نوع ۵۰ فیلد را معرفی می‌کنند؛ شامل پلاک، راننده، مالک، فرستنده، گیرنده، کرایه، تاریخ صدور، نشانی بارگیری/تخلیه، فهرست کالاها، پرداخت، بیمه و مختصات مبدأ/مقصد.
 
-قرارداد ارسال کامل هنوز قابل پیاده‌سازی نیست؛ زیرا تعریف BOLGoodCnt و GPSCnt در صفحات دریافت‌شده وجود ندارد. فیلدهای مبهم مانند SerialNo و زمان Unix نیز نیازمند تأییدند.
+### BOLGoodCnt — صفحه ۱۲
+- GoodID: int (اجباری)
+- WeightKg: float (اجباری)
+- Value: float (اجباری)
+- PackingTypeID: int (اجباری)
+- GoodtypeID: int (اجباری)
+- Description: string
+- Image: Byte[]
+
+### GPSCnt — صفحه ۱۲
+- Latitude, Longitude, Altitude, Bearing: float
+- NumberOfSatellite, PDOP, GPSSpeed, GPSMaxSpeed: byte
+- GPSTotalTraveledDistance: int
+
+در صفحه ۱۲ برای فیلدهای GPS علامت اجباری درج نشده است؛ بنابراین در مدل Kotlin به‌صورت nullable نگهداری می‌شوند. نوع باینری Image ثبت شده، اما شیوه انتقال آن در JSON/SOAP (مثلاً Base64 یا ساختار دیگر) هنوز تأیید نشده است.
+
+با دریافت صفحه ۱۲، مدل‌های Kotlin مربوط به BOLGoodCnt و GPSCnt اضافه شده‌اند. مدل کامل BOLCnt و serializer درخواست هنوز باید پس از تأیید قالب سیمی، تاریخ‌ها و نام پارامترها تکمیل شوند. فیلدهای مبهم مانند SerialNo و زمان Unix نیز نیازمند تأییدند.
 
 ## موارد حل‌نشده و مسدودکننده اتصال تولیدی
 
