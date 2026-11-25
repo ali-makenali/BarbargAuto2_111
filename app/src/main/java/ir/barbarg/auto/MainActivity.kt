@@ -10,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import ir.barbarg.auto.data.FleetViewModel
 import ir.barbarg.auto.data.FreightDraftStore
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: FleetViewModel by viewModels()
@@ -77,6 +79,9 @@ class MainActivity : AppCompatActivity() {
         inputs["driverCode"] = addField(content, "کد ملی راننده", true)
         inputs["secondDriverCode"] = addField(content, "کد ملی راننده دوم (اختیاری)", true)
         inputs["ownerNationalId"] = addField(content, "شناسه ملی مالک", true)
+        inputs["issuerNationalCode"] = addField(content, "کد ملی صادرکننده باربرگ", true)
+        inputs["issuerMobile"] = addField(content, "موبایل صادرکننده", true)
+        inputs["issueDate"] = addField(content, "تاریخ و ساعت صدور")
 
         section(content, "۲. فرستنده")
         addTypeSpinner(content, "نوع فرستنده", listOf("حقیقی", "حقوقی"))
@@ -134,15 +139,21 @@ class MainActivity : AppCompatActivity() {
         inputs["destinationLon"] = addField(content, "طول جغرافیایی مقصد", true)
 
         restored.forEach { (key, value) -> inputs[key]?.setText(value) }
+        restoreGoodsRows(restored["goodsRows"])
         content.addView(Button(this).apply {
             text = "ذخیره پیش‌نویس روی گوشی"
             setOnClickListener {
-                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "loadingAddress", "unloadingAddress")
+                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "issuerNationalCode", "issueDate", "loadingAddress", "unloadingAddress")
                 if (required.any { inputs[it]?.text.isNullOrBlank() }) {
                     toast("فیلدهای ضروری خودرو، راننده، مالک و نشانی بارگیری/تخلیه را تکمیل کن.")
                     return@setOnClickListener
                 }
+                if (goodsRows.isEmpty() || goodsRows.any { it.name.text.isNullOrBlank() }) {
+                    toast("حداقل یک ردیف کالا با نام کالا وارد کن.")
+                    return@setOnClickListener
+                }
                 val safe = inputs.filterKeys { it !in SENSITIVE_KEYS }.mapValues { it.value.text.toString().trim() }.toMutableMap()
+                safe["goodsRows"] = serializeGoodsRows()
                 safe["fleet"] = fleetSpinner.selectedItem?.toString().orEmpty()
                 safe["goodsCount"] = goodsRows.size.toString()
                 draft.save(safe)
@@ -158,6 +169,31 @@ class MainActivity : AppCompatActivity() {
         viewModel.fleets.observe(this) { renderFleets(it) }
     }
 
+    private fun serializeGoodsRows(): String {
+        val array = JSONArray()
+        goodsRows.forEach { row ->
+            array.put(JSONObject().put("name", row.name.text.toString()).put("type", row.type.text.toString()).put("packing", row.packing.text.toString()).put("quantity", row.quantity.text.toString()).put("weight", row.weight.text.toString()))
+        }
+        return array.toString()
+    }
+
+    private fun restoreGoodsRows(raw: String?) {
+        if (raw.isNullOrBlank()) return
+        try {
+            val array = JSONArray(raw)
+            if (goodsRows.size == 1 && goodsRows.first().name.text.isNullOrBlank()) { goodsContainer.removeAllViews(); goodsRows.clear() }
+            for (i in 0 until array.length()) {
+                val item = array.optJSONObject(i) ?: continue
+                addGoodsRow()
+                val row = goodsRows.last()
+                row.name.setText(item.optString("name"))
+                row.type.setText(item.optString("type"))
+                row.packing.setText(item.optString("packing"))
+                row.quantity.setText(item.optString("quantity"))
+                row.weight.setText(item.optString("weight"))
+            }
+        } catch (_: Exception) { toast("بخش کالاهای پیش‌نویس قبلی قابل بازیابی نبود.") }
+    }
     private fun addGoodsRow() {
         val box = card()
         val name = edit("نام کالا")
@@ -233,6 +269,6 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         val GREEN = Color.rgb(25, 75, 64)
-        val SENSITIVE_KEYS = setOf("driverCode", "secondDriverCode", "ownerNationalId", "senderNationalId", "senderMobile", "senderPhone", "receiverNationalId", "receiverMobile", "receiverPhone")
+        val SENSITIVE_KEYS = setOf("driverCode", "secondDriverCode", "ownerNationalId", "senderNationalId", "senderMobile", "senderPhone", "receiverNationalId", "receiverMobile", "receiverPhone", "issuerNationalCode", "issuerMobile")
     }
 }
