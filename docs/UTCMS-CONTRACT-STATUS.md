@@ -62,7 +62,31 @@
 - خروجی هش رمز عبور با Base64 به رشته تبدیل می‌شود.
 - سپس بایت‌های عبارت آغازین `CompanyCode + passwordHashValue + sa...` با `Encoding.Unicode` ساخته می‌شوند.
 
-**محدودیت مهم:** متن کد در همین نقطه قطع شده است. ادامه ورودی SHA-512، نحوه استفاده از `salt`، محاسبه نهایی `hashedValue` و قالب دقیق خروجی معلوم نیست. بنابراین پیاده‌سازی هش نهایی یا ارسال درخواست واقعی بر اساس این صفحه به‌تنهایی مجاز و قابل‌اتکا نیست. همچنین `Random` معمولی مولد تصادفی رمزنگارانه نیست؛ این نمونه را بدون تأیید مستندات رسمی، الگوی امنیتی مناسب تلقی نمی‌کنیم.
+**ادامه کد ارسالی کاربر، اکنون الگوریتم نمونه را کامل می‌کند:**
+```csharp
+salt = new Random(DateTime.Now.Millisecond).Next();
+byte[] passwordBytes = Encoding.Unicode.GetBytes(password);
+byte[] passwordHashBytes = SHA512Managed().ComputeHash(passwordBytes);
+string passwordHashValue = Convert.ToBase64String(passwordHashBytes);
+byte[] inputBytes = Encoding.Unicode.GetBytes(CompanyCode + passwordHashValue + salt);
+byte[] hashBytes = SHA512Managed().ComputeHash(inputBytes);
+hashedValue = Convert.ToBase64String(hashBytes);
+```
+
+**ترتیب محاسبه طبق نمونه:**
+1. تولید `salt` با `new Random(DateTime.Now.Millisecond).Next()`.
+2. تبدیل رمز عبور به بایت با `Encoding.Unicode` (در .NET، UTF-16 little-endian).
+3. محاسبه SHA-512 روی بایت‌های رمز عبور.
+4. تبدیل هش اول به Base64 و ساخت `passwordHashValue`.
+5. الحاق رشته‌ای `CompanyCode + passwordHashValue + salt`.
+6. تبدیل رشته الحاق‌شده با `Encoding.Unicode` و محاسبه SHA-512 دوم.
+7. تبدیل هش دوم به Base64 و قرار دادن آن در `hashedValue`.
+
+**ملاحظات پیاده‌سازی و امنیت:**
+- این الگوریتم اکنون از نظر ترتیب عملیات در نمونه کد کامل است، اما برای تطبیق صددرصدی بین زبان‌ها باید نحوه تبدیل عدد `salt` به رشته و فرهنگ عددی (culture) نیز مشخص یا با بردار آزمون رسمی تأیید شود.
+- `Random(DateTime.Now.Millisecond)` یک مولد تصادفی رمزنگارانه نیست و مقدار seed با دقت زمانی محدود می‌تواند قابل پیش‌بینی یا تکراری باشد. این روش را نباید به‌عنوان الگوی امن جدید برای طراحی سامانه به کار برد؛ صرفاً برای سازگاری با نمونه مستند ثبت شده است.
+- `SHA512Managed` در .NET جدید منسوخ شده؛ معادل رمزنگاری استاندارد SHA-512 باید با API پشتیبانی‌شده پیاده‌سازی شود، با حفظ دقیق ورودی و encoding.
+- داشتن الگوریتم هش به‌تنهایی مجوز ارسال درخواست واقعی یا اثبات صحت endpoint و سایر قراردادها نیست. قبل از فعال‌سازی، نمونه ورودی/خروجی رسمی یا WSDL و محیط آزمایشی لازم است.
 
 ## اطلاعات پایه بسته‌بندی و کالا — صفحه ۲۳
 
