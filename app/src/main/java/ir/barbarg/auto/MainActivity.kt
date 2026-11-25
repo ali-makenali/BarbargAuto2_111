@@ -143,9 +143,9 @@ class MainActivity : AppCompatActivity() {
         content.addView(Button(this).apply {
             text = "ذخیره پیش‌نویس روی گوشی"
             setOnClickListener {
-                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "issuerNationalCode", "issueDate", "senderName", "receiverName", "loadingAddress", "unloadingAddress", "serialNo", "totalPayment")
+                val required = listOf("plate", "plateSerial", "plateType", "driverCode", "ownerNationalId", "issuerNationalCode", "issueDate", "senderName", "receiverName", "loadingAddress", "unloadingAddress", "totalPayment")
                 if (required.any { inputs[it]?.text.isNullOrBlank() }) {
-                    toast("فیلدهای ضروری خودرو، راننده، مالک و نشانی بارگیری/تخلیه را تکمیل کن.")
+                    toast("فیلدهای ضروری خودرو، راننده، مالک، فرستنده، گیرنده، بارگیری/تخلیه و مبلغ کل را تکمیل کن.")
                     return@setOnClickListener
                 }
                 if (goodsRows.isEmpty() || goodsRows.any { it.name.text.isNullOrBlank() }) {
