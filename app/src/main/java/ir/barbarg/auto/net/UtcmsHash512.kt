@@ -3,7 +3,6 @@ package ir.barbarg.auto.net
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.Base64
 
 /**
  * Reproduces the two-stage SHA-512 procedure shown in the supplied UTCMS C# sample.
@@ -40,14 +39,35 @@ object UtcmsHash512 {
 
         val passwordBytes = password.toByteArray(utf16Le)
         val passwordHashBytes = sha512(passwordBytes)
-        val passwordHashValue = Base64.getEncoder().encodeToString(passwordHashBytes)
+        val passwordHashValue = encodeBase64(passwordHashBytes)
 
         val combined = companyCode + passwordHashValue + salt.toString()
         val inputBytes = combined.toByteArray(utf16Le)
         val hashBytes = sha512(inputBytes)
-        val hashedValue = Base64.getEncoder().encodeToString(hashBytes)
+        val hashedValue = encodeBase64(hashBytes)
 
         return UtcmsHashCredentials(salt = salt, hashedValue = hashedValue)
+    }
+
+
+    /** Small RFC 4648 Base64 encoder to keep compatibility with minSdk 23. */
+    private fun encodeBase64(input: ByteArray): String {
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        val output = StringBuilder(((input.size + 2) / 3) * 4)
+        var index = 0
+        while (index < input.size) {
+            val first = input[index++].toInt() and 0xff
+            val hasSecond = index < input.size
+            val second = if (hasSecond) input[index++].toInt() and 0xff else 0
+            val hasThird = index < input.size
+            val third = if (hasThird) input[index++].toInt() and 0xff else 0
+
+            output.append(alphabet[first ushr 2])
+            output.append(alphabet[((first and 0x03) shl 4) or (second ushr 4)])
+            output.append(if (hasSecond) alphabet[((second and 0x0f) shl 2) or (third ushr 6)] else '=')
+            output.append(if (hasThird) alphabet[third and 0x3f] else '=')
+        }
+        return output.toString()
     }
 
     private fun sha512(input: ByteArray): ByteArray =
