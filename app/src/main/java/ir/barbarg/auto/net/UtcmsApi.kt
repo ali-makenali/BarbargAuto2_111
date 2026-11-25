@@ -16,6 +16,8 @@ import java.net.URL
 class UtcmsApi {
     companion object {
         const val FREIGHTER_BASE = "https://services2.sipaad.ir/ITMFreighter.asmx/"
+        // Production calls remain disabled until the official WSDL, endpoint, and hash contract are verified.
+        private const val INTEGRATION_CONTRACT_VERIFIED = false
         private const val CONNECT_TIMEOUT_MS = 20_000
         private const val READ_TIMEOUT_MS = 30_000
         private val allowedMethods = setOf("WS39_RegUserGenerateOTP", "WS40_RegUserAuthenticateOTP")
@@ -48,6 +50,10 @@ class UtcmsApi {
 
     private suspend fun call(method: String, account: Account, fields: JSONObject): ApiResult =
         withContext(Dispatchers.IO) {
+            if (!INTEGRATION_CONTRACT_VERIFIED) {
+                account.password.fill('\u0000')
+                return@withContext ApiResult(false, errorMessage = "اتصال UTCMS تا زمان تأیید WSDL، آدرس و الگوریتم امنیتی غیرفعال است")
+            }
             if (method !in allowedMethods) {
                 account.password.fill('\u0000')
                 return@withContext ApiResult(false, errorMessage = "متد درخواست مجاز نیست")
