@@ -59,5 +59,3 @@ jobs:
         with:
           name: Barbarg-Debug-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
