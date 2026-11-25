@@ -40,6 +40,30 @@
   - `445004`: فیلدهای ورودی باید پر شوند
 - آدرس سرویس در OCR به‌صورت وارونه آمده و با صفحات قبلی ITMBOL هم‌خوانی دارد؛ تا تأیید WSDL به‌عنوان endpoint اجرایی استفاده نمی‌شود.
 
+## اطلاعات پایه بسته‌بندی و کالا — صفحه ۲۳
+
+### WS33_GetBaseInfoPackingType
+امضا:
+`WS33_GetBaseInfoPackingType(string CompanyCode, int Salt, string HashedValue)`
+
+- پارامترها: `CompanyCode` رشته، `Salt` عدد صحیح، `HashedValue` رشته.
+- پاسخ موفق: آرایه `KeyValueCnt[]`.
+- پاسخ خطا: `ExceptionCnt`.
+- خطاها:
+  - `-1`: خطای ناشناخته
+  - `445031`: دسترسی کاربر به سامانه غیرفعال است
+  - `445003`: ورود ناموفق
+  - `445004`: فیلدهای ورودی باید پر شوند
+
+### WS34_GetBaseInfoGood
+امضا:
+`WS34_GetBaseInfoGood(string CompanyCode, int Salt, string HashedValue)`
+
+- پارامترها: `CompanyCode` رشته، `Salt` عدد صحیح، `HashedValue` رشته.
+- طبق صفحات ۲۱ تا ۲۴، پاسخ موفق این سرویس آرایه `KeyValueCnt[]` و پاسخ خطا `ExceptionCnt` است.
+- فهرست خطاها در متن ارسالی صفحه ۲۳ برای این متد تکرار نشده؛ بنابراین کدهای خطا را به این عملیات نسبت نمی‌دهیم.
+- آدرس در OCR به‌صورت وارونه درج شده و تا تأیید WSDL به‌عنوان endpoint اجرایی استفاده نمی‌شود.
+
 ## جزئیات عملیات حمل — صفحات ۱۳ و ۱۷
 
 ### WS03_StartBOL
