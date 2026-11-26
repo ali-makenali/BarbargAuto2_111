@@ -130,7 +130,9 @@ class UtcmsApi {
                 "فیلدهای ضروری سند کامل نیست: " + missing.joinToString(", ")
             )
         }
-        if ((bol.optJSONArray("Goods")?.length() ?: 0) == 0) {
+        val goods = bol.optJSONObject("Goods")?.optJSONArray("BOLGoodCnt")
+            ?: bol.optJSONArray("Goods")
+        if ((goods?.length() ?: 0) == 0) {
             return reject(account, "حداقل یک ردیف کالا باید ثبت شود")
         }
         if (!hasGpsCoordinates(insertPosition)) {
