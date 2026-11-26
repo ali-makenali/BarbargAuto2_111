@@ -91,7 +91,7 @@ footer button{font-size:13px;padding:10px}
 <label>پس‌کرایه (ریال)</label><input id="rt_post" inputmode="numeric">
 <button class="primary" onclick="saveRoute()">ذخیره مسیر</button><div id="rmsg"></div></div></section>
 
-<section id="review" class="section"><div class="card"><h2>🔎 بررسی اطلاعات</h2><div id="checks"></div><button class="primary" onclick="openConfirm()">نمایش خلاصه و تأیید نهایی</button></div></section>
+<section id="review" class="section"><div class="card"><h2>🔎 بررسی اطلاعات</h2><h3>شناسه‌های رسمی صدور</h3><label>کد ملی راننده</label><input id="api_driver_code"><label>شناسه ملی مالک</label><input id="api_owner_code"><div class="row"><div><label>شماره سریال سند</label><input id="api_serial" type="number"></div><div><label>سریال پلاک</label><input id="api_plaque_sn" type="number"></div></div><div class="row"><div><label>نوع پلاک (مثلاً IRI)</label><input id="api_plaque_type" value="IRI"></div><div><label>کد ملی صادرکننده</label><input id="api_issuer_code"></div></div><div class="row"><div><label>کد کالا</label><input id="api_good_id" type="number"></div><div><label>کد نوع کالا</label><input id="api_good_type" type="number"></div></div><div class="row"><div><label>کد بسته‌بندی</label><input id="api_packing_id" type="number"></div><div><label>وزن (کیلوگرم)</label><input id="api_weight" type="number" step="0.01"></div></div><label>مقدار/تعداد کالا</label><input id="api_value" type="number" step="0.01"><label>نوع مالک/فرستنده/گیرنده: حقیقی 1، حقوقی 2</label><div class="row"><input id="api_sender_type" type="number" value="1"><input id="api_receiver_type" type="number" value="1"></div><label>تاریخ صدور ISO (خالی = زمان فعلی)</label><input id="api_issue_date" placeholder="2026-11-27T12:00:00"><button class="primary" onclick="issueRealBol()">صدور واقعی در UTCMS</button><div id="apiStatus" class="status note">در انتظار عملیات…</div><div id="traceCode"></div><div class="grid"><button class="secondary" onclick="startRealTransport()">شروع حمل</button><button class="secondary" onclick="trackRealTransport()">ثبت GPS</button><button class="warn" onclick="endRealTransport()">پایان حمل</button></div><div id="checks"></div><button class="primary" onclick="openConfirm()">نمایش خلاصه و تأیید نهایی</button></div></section>
 </main>
 
 <div id="modal"><div class="modalbox"><h2>✅ خلاصه اطلاعات حمل</h2><div id="summary"></div>
@@ -158,6 +158,19 @@ function exportData(){
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='barbarg-backup.json';a.click();URL.revokeObjectURL(a.href);
 }
 function clearAll(){if(confirm('همه اطلاعات ذخیره‌شده از این مرورگر پاک شود؟')){for(const k in fields)localStorage.removeItem('barbot_'+k);location.reload()}}
+function apiStatus(ok,msg,trace){const el=document.getElementById('apiStatus');if(!el)return;el.className='status '+(ok?'ok':'bad');el.textContent=msg||'';if(trace)document.getElementById('traceCode').textContent='کد رهگیری: '+trace;}
+window.onNativeResult=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;apiStatus(r.success,r.message,r.traceCode)}catch(e){apiStatus(false,'پاسخ برنامه قابل خواندن نیست')}};
+function issueRealBol(){
+const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
+const val=id=>document.getElementById(id).value.trim();
+const required=[v.v_plate,d.d_name,r.s_name,r.r_name,r.rt_origin,r.rt_dest,val('api_driver_code'),val('api_owner_code'),val('api_serial'),val('api_plaque_sn'),val('api_plaque_type'),val('api_issuer_code'),val('api_good_id'),val('api_good_type'),val('api_packing_id'),val('api_weight'),val('api_value'),r.rt_fare];
+if(required.some(x=>!String(x||'').trim())){apiStatus(false,'اطلاعات اجباری صدور یا شناسه‌های رسمی ناقص است.');return}
+const bol={PlaqueID:v.v_plate,PlaqueSN:Number(val('api_plaque_sn')),PlaqueType:val('api_plaque_type'),DriverNationalCode:val('api_driver_code'),OWNERNATIONALID:val('api_owner_code'),SenderType:Number(val('api_sender_type')||1),SenderName:r.s_name,SenderLastName:r.s_family||'',SenderMobile:r.s_phone||'',SenderAddress:r.rt_origin,RecieverType:Number(val('api_receiver_type')||1),RecieverName:r.r_name,RecieverLastName:r.r_family||'',RecieverMobile:r.r_phone||'',RecieverAddress:r.rt_dest,Freightage:Number(r.rt_fare||0),PreFreightage:Number(r.rt_pre||0),SerialNo:Number(val('api_serial')),IssuerNaCode:val('api_issuer_code'),IssueDate:val('api_issue_date')||new Date().toISOString(),LoadingPlaceAddress:r.rt_origin,OffLoadingPlaceAddress:r.rt_dest,Goods:[{GoodID:Number(val('api_good_id')),WeightKg:Number(val('api_weight')),Value:Number(val('api_value')),PackingTypeID:Number(val('api_packing_id')),GoodtypeID:Number(val('api_good_type'))}],TotalAmountPayment:Number(r.rt_fare||0)};
+if(!window.BarbargNative){apiStatus(false,'پل ارتباطی بومی فعال نیست.');return}apiStatus(true,'در حال ارسال درخواست به UTCMS…');window.BarbargNative.issueBol(JSON.stringify(bol));
+}
+function startRealTransport(){if(window.BarbargNative)window.BarbargNative.startTransport();else apiStatus(false,'اتصال بومی فعال نیست')}
+function trackRealTransport(){if(window.BarbargNative)window.BarbargNative.sendTrack();else apiStatus(false,'اتصال بومی فعال نیست')}
+function endRealTransport(){const no=Number(prompt('شماره رسید تحویل را وارد کنید:')||0);if(!no){apiStatus(false,'شماره رسید معتبر نیست');return}if(window.BarbargNative)window.BarbargNative.endTransport(no,Math.floor(Date.now()/1000));else apiStatus(false,'اتصال بومی فعال نیست')}
 load();
 </script>
 </body></html>
