@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">دستیار باربرگ ۲.۱</string>
+    <string name="app_name">دستیار باربرگ ۲.۲</string>
     <string name="title_main">دستیار باربرگ شهری</string>
-    <string name="subtitle_main">مدیریت محلی ناوگان‌ها</string>
+    <string name="subtitle_main">داشبورد مدیریت اطلاعات حمل</string>
     <string name="hint_fleet">نام ناوگان</string>
     <string name="btn_add">افزودن ناوگان</string>
     <string name="empty_fleets">هنوز ناوگانی اضافه نشده است.</string>
-    <string name="status_line">وضعیت اتصال: غیرفعال تا زمان تأیید رسمی مشخصات و دسترسی وب‌سرویس SIPAAD.</string>
+    <string name="status_line">داشبورد محلی آماده است. ثبت نهایی سند باید از مسیر رسمی و با اطلاعات معتبر انجام شود.</string>
 </resources>
