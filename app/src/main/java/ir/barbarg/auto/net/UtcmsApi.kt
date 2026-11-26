@@ -121,7 +121,7 @@ class UtcmsApi {
             return reject(account, "زمان ثبت سند باید Unix timestamp معتبر باشد")
         }
         val missing = requiredBolFields.filter { field ->
-            !bol.has(field) || bol.isNull(field) ||
+            !bol.has(field) || (bol.isNull(field) && field != "FreighterID") ||
                 (bol.opt(field) is String && bol.optString(field).isBlank())
         }
         if (missing.isNotEmpty()) {
