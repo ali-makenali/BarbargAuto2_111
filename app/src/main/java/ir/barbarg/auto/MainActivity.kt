@@ -14,12 +14,15 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import ir.barbarg.auto.data.LocalDatabase
+import ir.barbarg.auto.security.ServiceCredentialStore
 import ir.barbarg.auto.net.UtcmsApi
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -27,6 +30,7 @@ import org.json.JSONObject
 class MainActivity : AppCompatActivity() {
     private val api = UtcmsApi()
     private lateinit var localDb: LocalDatabase
+    private lateinit var credentialStore: ServiceCredentialStore
     private var loginNationalCode = ""
     private var loginMobile = ""
     private var loginAccountType = "driver"
@@ -39,7 +43,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         localDb = LocalDatabase(this)
-        showLoginDialog()
+        credentialStore = ServiceCredentialStore(this)
+        if (credentialStore.hasCredentials()) showLoginDialog() else showServiceSetupDialog()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val web = dashboard
@@ -48,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun showLoginDialog() {
+    private fun showServiceSetupDialog() {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(42, 12, 42, 0) }
         fun field(label: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(this).apply {
             hint = label
@@ -56,30 +61,79 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             box.addView(this)
         }
-        val company = field("کد شرکت / CompanyCode")
-        val pass = field("رمز عبور سرویس", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
-        val national = field("کد ملی / شناسه ملی", InputType.TYPE_CLASS_NUMBER)
-        val mobile = field("شماره موبایل ثبت‌شده در UTCMS", InputType.TYPE_CLASS_PHONE)
-        val help = TextView(this).apply { text = "اطلاعات حساب سرویس و مشخصات کاربر را وارد کنید."; setPadding(0, 16, 0, 0) }
+        val company = field("شناسه حساب سرویس UTCMS")
+        val pass = field("رمز حساب سرویس UTCMS", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+        val help = TextView(this).apply {
+            text = "این مشخصات فقط یک‌بار برای اتصال امن برنامه به وب‌سرویس لازم است؛ در صفحه ورود راننده یا شرکت نمایش داده نمی‌شود."
+            setPadding(0, 16, 0, 0)
+        }
         box.addView(help)
-        val dlg = AlertDialog.Builder(this).setTitle("ورود و احراز هویت UTCMS").setView(box)
-            .setCancelable(false).setNegativeButton("خروج") { _, _ -> finish() }
+        val dlg = AlertDialog.Builder(this).setTitle("تنظیم اتصال سرویس").setView(box)
+            .setCancelable(false).setPositiveButton("ذخیره امن", null).create()
+        dlg.setOnShowListener {
+            dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val code = company.text.toString().trim()
+                val password = pass.text.toString().toCharArray()
+                if (code.isBlank() || password.isEmpty()) {
+                    help.text = "شناسه و رمز حساب سرویس الزامی است."
+                    password.fill('\u0000')
+                    return@setOnClickListener
+                }
+                try {
+                    credentialStore.save(code, password)
+                    dlg.dismiss()
+                    showLoginDialog()
+                } catch (e: Exception) {
+                    help.text = "ذخیره امن انجام نشد: " + (e.message ?: "")
+                } finally {
+                    password.fill('\u0000')
+                }
+            }
+        }
+        dlg.show()
+    }
+
+    private fun showLoginDialog() {
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(42, 12, 42, 0) }
+        val accountType = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                listOf("ورود به‌عنوان راننده", "ورود به‌عنوان شرکت"))
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        box.addView(accountType)
+        fun field(label: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(this).apply {
+            hint = label
+            inputType = type
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            box.addView(this)
+        }
+        val national = field("کد ملی / شناسه ملی", InputType.TYPE_CLASS_NUMBER)
+        val mobile = field("شماره همراه ثبت‌شده در UTCMS", InputType.TYPE_CLASS_PHONE)
+        val help = TextView(this).apply { text = "برای احراز هویت، کد ملی و شماره همراه ثبت‌شده را وارد کنید."; setPadding(0, 16, 0, 0) }
+        box.addView(help)
+        val dlg = AlertDialog.Builder(this).setTitle("ورود و احراز هویت").setView(box)
+            .setCancelable(false).setNegativeButton("تنظیم اتصال") { _, _ -> showServiceSetupDialog() }
             .setPositiveButton("دریافت کد تأیید", null).create()
         dlg.setOnShowListener {
             dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val c = company.text.toString().trim()
-                val p = pass.text.toString()
                 val n = national.text.toString().trim()
                 val m = mobile.text.toString().trim()
-                if (c.isBlank() || p.isBlank() || n.isBlank() || m.isBlank()) {
-                    help.text = "همه فیلدها الزامی هستند."
+                if (n.isBlank() || m.isBlank()) {
+                    help.text = "کد ملی و شماره همراه الزامی است."
                     return@setOnClickListener
                 }
+                val credentials = credentialStore.load()
+                if (credentials == null) {
+                    dlg.dismiss()
+                    showServiceSetupDialog()
+                    return@setOnClickListener
+                }
+                loginAccountType = if (accountType.selectedItemPosition == 0) "driver" else "company"
                 dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
-                help.text = "در حال اتصال به UTCMS و درخواست کد یک‌بارمصرف…"
+                help.text = "در حال درخواست کد یک‌بارمصرف از UTCMS…"
                 lifecycleScope.launch {
-                    val secret = p.toCharArray()
-                    val result = api.generateOtp(UtcmsApi.Account(c, secret.copyOf()), n, m)
+                    val secret = credentials.password.copyOf()
+                    val result = api.generateOtp(UtcmsApi.Account(credentials.companyCode, secret.copyOf()), n, m)
                     val nested = try { result.value?.let { JSONObject(it) } } catch (_: Exception) { null }
                     val id = result.payload?.optInt("IDNo", -1)?.takeIf { it > 0 }
                         ?: nested?.optInt("IDNo", -1)?.takeIf { it > 0 }
@@ -87,17 +141,19 @@ class MainActivity : AppCompatActivity() {
                         ?: result.payload?.optString("d")?.toIntOrNull()
                         ?: 0
                     if (result.success && id > 0) {
-                        companyCode = c
+                        companyCode = credentials.companyCode
                         servicePassword.fill('\u0000')
                         servicePassword = secret.copyOf()
                         pendingIdNo = id
                         loginNationalCode = n
                         loginMobile = m
                         secret.fill('\u0000')
+                        credentials.password.fill('\u0000')
                         dlg.dismiss()
                         showOtpDialog()
                     } else {
                         secret.fill('\u0000')
+                        credentials.password.fill('\u0000')
                         dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                         help.text = result.errorMessage ?: ("پاسخ سرویس: " + (result.value ?: result.payload))
                     }
