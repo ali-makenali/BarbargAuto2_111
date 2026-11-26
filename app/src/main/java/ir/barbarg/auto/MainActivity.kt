@@ -19,12 +19,17 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import ir.barbarg.auto.data.LocalDatabase
 import ir.barbarg.auto.net.UtcmsApi
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private val api = UtcmsApi()
+    private lateinit var localDb: LocalDatabase
+    private var loginNationalCode = ""
+    private var loginMobile = ""
+    private var loginAccountType = "driver"
     private var companyCode = ""
     private var servicePassword = charArrayOf()
     private var pendingIdNo = 0
@@ -33,6 +38,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        localDb = LocalDatabase(this)
         showLoginDialog()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -85,6 +91,8 @@ class MainActivity : AppCompatActivity() {
                         servicePassword.fill('\u0000')
                         servicePassword = secret.copyOf()
                         pendingIdNo = id
+                        loginNationalCode = n
+                        loginMobile = m
                         secret.fill('\u0000')
                         dlg.dismiss()
                         showOtpDialog()
@@ -113,7 +121,10 @@ class MainActivity : AppCompatActivity() {
                 help.text = "در حال تأیید هویت در UTCMS…"
                 lifecycleScope.launch {
                     val result = api.authenticateOtp(UtcmsApi.Account(companyCode, servicePassword.copyOf()), pendingIdNo, otp)
-                    if (result.success) { dlg.dismiss(); openDashboard() }
+                    if (result.success) {
+                        localDb.saveVerifiedProfile(loginNationalCode, loginAccountType, loginMobile)
+                        dlg.dismiss(); openDashboard()
+                    }
                     else {
                         dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                         help.text = result.errorMessage ?: ("احراز هویت ناموفق بود: " + (result.value ?: ""))
@@ -145,6 +156,18 @@ class MainActivity : AppCompatActivity() {
 
     private inner class UtcmsBridge {
         @JavascriptInterface
+        fun saveLocalRecord(type: String, key: String, json: String): Boolean =
+            try { localDb.put(type, key, JSONObject(json)) } catch (_: Exception) { false }
+
+        @JavascriptInterface
+        fun listLocalRecords(type: String): String =
+            try { localDb.all(type).toString() } catch (_: Exception) { "[]" }
+
+        @JavascriptInterface
+        fun deleteLocalRecord(type: String, key: String): Boolean =
+            try { localDb.delete(type, key) } catch (_: Exception) { false }
+
+        @JavascriptInterface
         fun issueBol(json: String) {
             runOnUiThread {
                 val position = currentGps()
@@ -165,6 +188,7 @@ class MainActivity : AppCompatActivity() {
                             ?: result.payload?.optString("TraceCode")?.takeIf { it.isNotBlank() }
                         if (result.success && !trace.isNullOrBlank()) {
                             lastTraceCode = trace
+                            localDb.saveBol(trace, bol, result.payload ?: JSONObject().put("value", result.value ?: ""), "ISSUED")
                             notifyPage(true, "باربرگ صادر شد. کد رهگیری: " + trace, trace)
                         } else {
                             notifyPage(false, result.errorMessage ?: ("پاسخ صدور: " + (result.value ?: result.payload)))
@@ -253,6 +277,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         servicePassword.fill('\u0000')
+        if (::localDb.isInitialized) localDb.close()
         dashboard?.stopLoading()
         dashboard?.removeJavascriptInterface("BarbargNative")
         dashboard?.destroy()
