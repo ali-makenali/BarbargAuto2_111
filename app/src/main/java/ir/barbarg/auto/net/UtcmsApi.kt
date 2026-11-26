@@ -155,7 +155,7 @@ class UtcmsApi {
 
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("StartTime", startTime)
+            .put("StartDate", startTime)
             .put("StartPosition", JSONObject(startPosition.toString()))
         return call("WS03_StartBOL", account, body)
     }
