@@ -159,7 +159,7 @@ function exportData(){
 }
 function clearAll(){if(confirm('همه اطلاعات ذخیره‌شده از این مرورگر پاک شود؟')){for(const k in fields)localStorage.removeItem('barbot_'+k);location.reload()}}
 function apiStatus(ok,msg,trace){const el=document.getElementById('apiStatus');if(!el)return;el.className='status '+(ok?'ok':'bad');el.textContent=msg||'';if(trace)document.getElementById('traceCode').textContent='کد رهگیری: '+trace;}
-window.onNativeResult=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;apiStatus(r.success,r.message,r.traceCode)}catch(e){apiStatus(false,'پاسخ برنامه قابل خواندن نیست')}};
+window.onNativeResult=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;apiStatus(r.success,r.message,r.traceCode);if(r.success&&r.message.indexOf('شروع حمل')>=0){if(window.bolTrackTimer)clearInterval(window.bolTrackTimer);window.bolTrackTimer=setInterval(function(){if(window.BarbargNative)window.BarbargNative.sendTrack()},60000)}if(r.success&&r.message.indexOf('پایان حمل')>=0&&window.bolTrackTimer){clearInterval(window.bolTrackTimer);window.bolTrackTimer=null}}catch(e){apiStatus(false,'پاسخ برنامه قابل خواندن نیست')}};
 function issueRealBol(){
 const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
 const val=id=>document.getElementById(id).value.trim();
