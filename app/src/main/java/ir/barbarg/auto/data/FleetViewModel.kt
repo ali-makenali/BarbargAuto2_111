@@ -7,27 +7,29 @@ import androidx.lifecycle.MutableLiveData
 
 class FleetViewModel(application: Application) : AndroidViewModel(application) {
     private val store = FleetStore(application)
-    private val _fleets = MutableLiveData(store.load())
-    val fleets: LiveData<List<String>> = _fleets
+    private val _fleets = MutableLiveData(store.all())
+    val fleets: LiveData<List<FleetRecord>> = _fleets
 
-    fun addFleet(rawName: String): Boolean {
-        val name = rawName.trim()
-        if (name.isEmpty() || name.length > MAX_NAME_LENGTH) return false
-        val current = _fleets.value.orEmpty()
-        if (current.any { it.equals(name, ignoreCase = true) }) return false
-        val updated = current + name
-        store.save(updated)
-        _fleets.value = updated
+    fun add(record: FleetRecord): Boolean {
+        if (!store.insert(record)) return false
+        refresh()
         return true
     }
 
-    fun removeFleet(name: String) {
-        val updated = _fleets.value.orEmpty().filterNot { it == name }
-        store.save(updated)
-        _fleets.value = updated
+    fun update(previousDriverNationalId: String, record: FleetRecord): Boolean {
+        if (!store.update(previousDriverNationalId, record)) return false
+        refresh()
+        return true
     }
 
-    private companion object {
-        const val MAX_NAME_LENGTH = 60
+    fun remove(driverNationalId: String) {
+        store.delete(driverNationalId)
+        refresh()
+    }
+
+    fun search(query: String): List<FleetRecord> = store.search(query)
+
+    private fun refresh() {
+        _fleets.value = store.all()
     }
 }
