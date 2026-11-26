@@ -54,7 +54,7 @@ class UtcmsApi {
             "CompanyCommission", "ITServiceCost", "InfoServiceCost", "InsuranceCosts",
             "Tax", "LoadingPlaceProvinceID", "OffLoadingPlaceProvinceID",
             "OriginLattitude", "OriginLongitude", "DestinationLattitude",
-            "DestinationLongitude"
+            "DestinationLongitude", "FreighterID"
         )
     }
 
