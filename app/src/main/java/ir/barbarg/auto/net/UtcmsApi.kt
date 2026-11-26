@@ -50,7 +50,11 @@ class UtcmsApi {
             "LoadingPlaceAddress",
             "OffLoadingPlaceAddress",
             "Goods",
-            "TotalAmountPayment"
+            "TotalAmountPayment", "Freightage", "PreFreightage", "FreightageTax",
+            "CompanyCommission", "ITServiceCost", "InfoServiceCost", "InsuranceCosts",
+            "Tax", "LoadingPlaceProvinceID", "OffLoadingPlaceProvinceID",
+            "OriginLattitude", "OriginLongitude", "DestinationLattitude",
+            "DestinationLongitude"
         )
     }
 
@@ -155,7 +159,7 @@ class UtcmsApi {
 
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("StartDate", startTime)
+            .put("StartTime", startTime)
             .put("StartPosition", JSONObject(startPosition.toString()))
         return call("WS03_StartBOL", account, body)
     }
@@ -173,10 +177,16 @@ class UtcmsApi {
             return reject(account, "مختصات GPS معتبر نیست")
         }
 
+        val devicePoint = JSONObject()
+            .put("EventType", "SimplePoint")
+            .put("GPSStatus", 1)
+            .put("IOStatus", 0)
+            .put("EventTime", eventTime.toLong())
+            .put("EventPosition", JSONObject(eventPosition.toString()))
+        val positions = JSONObject().put("DeviceInfoCnt", org.json.JSONArray().put(devicePoint))
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("EventTime", eventTime)
-            .put("EventPosition", JSONObject(eventPosition.toString()))
+            .put("BOLPositions", positions)
         return call("WS06_InsertBOLTrack", account, body)
     }
 
