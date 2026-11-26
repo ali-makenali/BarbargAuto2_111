@@ -7,4 +7,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "BarbargAuto2_1"
 include(":app")
-gradle wrapper --gradle-version 8.9
