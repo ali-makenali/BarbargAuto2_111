@@ -74,7 +74,9 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     val secret = p.toCharArray()
                     val result = api.generateOtp(UtcmsApi.Account(c, secret.copyOf()), n, m)
-                    val id = result.payload?.optInt("IDNo", 0)
+                    val nested = try { result.value?.let { JSONObject(it) } } catch (_: Exception) { null }
+                    val id = result.payload?.optInt("IDNo", -1)?.takeIf { it > 0 }
+                        ?: nested?.optInt("IDNo", -1)?.takeIf { it > 0 }
                         ?: result.value?.trim()?.toIntOrNull()
                         ?: result.payload?.optString("d")?.toIntOrNull()
                         ?: 0
