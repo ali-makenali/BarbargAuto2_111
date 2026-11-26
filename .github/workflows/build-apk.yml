@@ -12,3 +12,4 @@
 
 - name: Build with Gradle
   run: ./gradlew build
+gradle wrapper --gradle-version 8.9
