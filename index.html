@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d7880">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>دستیار باربرگ شهری</title>
+<style>
+:root{--teal:#087981;--blue:#42a5e8;--orange:#f47a3a;--bg:#eef7f7;--danger:#d9534f;--ok:#16835d}
+*{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif}
+body{margin:0;background:linear-gradient(180deg,#62b6c0,#eef7f7 35%);color:#18222a}
+header{padding:28px 18px 22px;text-align:center;color:#fff}
+header h1{margin:0;font-size:25px} header p{margin:8px 0 0;font-size:13px;opacity:.95}
+main{max-width:650px;margin:auto;padding:0 14px 90px}
+.card{background:#fff;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 8px 25px #0001}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:12px;padding:14px 12px;font-size:15px;font-weight:bold;cursor:pointer}
+.primary{background:var(--teal);color:#fff}.secondary{background:#e8f5f6;color:var(--teal);border:1px solid var(--teal)}
+.warn{background:#fff1ea;color:#b84e16}.danger{background:#fdeaea;color:var(--danger)}
+h2{font-size:19px;margin:0 0 14px;color:var(--teal)}h3{margin:16px 0 8px;font-size:16px}
+label{display:block;margin:10px 0 5px;font-size:13px;color:#4b5960}
+input,select,textarea{width:100%;padding:13px;border:1.5px solid #6b9da0;border-radius:11px;font-size:16px;background:#fff}
+textarea{min-height:75px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tabs{display:flex;gap:7px;overflow:auto;padding-bottom:5px}.tab{white-space:nowrap;padding:10px 13px;border-radius:20px;background:#fff;border:1px solid #c7e1e3;color:#176d73;font-size:13px}.tab.active{background:var(--teal);color:#fff}
+.section{display:none}.section.active{display:block}.item{padding:12px;border:1px solid #d8e6e7;border-radius:12px;margin:8px 0;background:#fbfdfd}
+.small{font-size:12px;color:#68757c}.status{padding:10px;border-radius:10px;margin:8px 0;font-size:14px}.ok{background:#e8f7ef;color:#176d4d}.bad{background:#fdecec;color:#9b3030}.note{background:#fff7dc;color:#795e11}
+#modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.modalbox{background:#fff;width:min(540px,100%);max-height:88vh;overflow:auto;border-radius:20px;padding:20px}
+footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffee;border-top:1px solid #ddd;padding:10px 14px;display:flex;gap:8px;justify-content:center}
+footer button{font-size:13px;padding:10px}
+@media(max-width:430px){.grid,.row{grid-template-columns:1fr}.card{padding:15px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🤖 دستیار باربرگ شهری</h1>
+<p>مدیریت اطلاعات حمل واقعی • آماده‌سازی فرم • بررسی خطا • تأیید نهایی</p>
+</header>
+
+<main>
+<div class="tabs">
+<button class="tab active" data-s="home">🏠 خانه</button>
+<button class="tab" data-s="vehicle">🚚 خودرو</button>
+<button class="tab" data-s="driver">👤 راننده</button>
+<button class="tab" data-s="cargo">📦 بار</button>
+<button class="tab" data-s="route">📍 مسیر</button>
+<button class="tab" data-s="review">🔎 بررسی</button>
+</div>
+
+<section id="home" class="section active">
+<div class="card"><h2>شروع حمل جدید</h2>
+<p class="small">اطلاعات خودرو، راننده، بار و مسیر را ذخیره کن. برنامه قبل از مرحله نهایی همه موارد را بررسی می‌کند.</p>
+<div class="grid">
+<button class="secondary" onclick="go('vehicle')">🚚 اطلاعات خودرو</button>
+<button class="secondary" onclick="go('driver')">👤 اطلاعات راننده</button>
+<button class="secondary" onclick="go('cargo')">📦 اطلاعات بار</button>
+<button class="secondary" onclick="go('route')">📍 مبدأ و مقصد</button>
+</div></div>
+<div class="card"><h2>⚠️ نکته مهم</h2><div class="status note">این ابزار فقط برای مدیریت و آماده‌سازی اطلاعات مربوط به <b>حمل واقعی</b> طراحی شده است. صدور یا ثبت نهایی باید توسط شما و از مسیر مجاز سامانه انجام شود.</div></div>
+</section>
+
+<section id="vehicle" class="section"><div class="card"><h2>🚚 مشخصات خودرو</h2>
+<label>پلاک</label><input id="v_plate" placeholder="مثال: 66 ع 267 ایران 42">
+<div class="row"><div><label>ظرفیت</label><input id="v_capacity" placeholder="مثال: 20 تن"></div><div><label>نوع بارگیر</label><input id="v_type" placeholder="مثال: باری"></div></div>
+<label>وضعیت بیمه شخص ثالث</label><select id="v_ins"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
+<label>وضعیت فعالیت</label><select id="v_active"><option value="">انتخاب کنید</option><option>فعال</option><option>غیرفعال</option></select>
+<button class="primary" onclick="saveVehicle()">ذخیره خودرو</button><div id="vmsg"></div></div></section>
+
+<section id="driver" class="section"><div class="card"><h2>👤 مشخصات راننده</h2>
+<label>نام و نام خانوادگی</label><input id="d_name">
+<div class="row"><div><label>شماره گواهینامه</label><input id="d_license"></div><div><label>شماره همراه</label><input id="d_phone" inputmode="numeric"></div></div>
+<label>وضعیت اشتغال</label><select id="d_job"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
+<label>رتبه (در صورت وجود)</label><input id="d_rank">
+<button class="primary" onclick="saveDriver()">ذخیره راننده</button><div id="dmsg"></div></div></section>
+
+<section id="cargo" class="section"><div class="card"><h2>📦 مشخصات کالا</h2>
+<label>نام کالا</label><input id="c_name" placeholder="مثال: ماسه">
+<label>نوع بسته‌بندی</label><input id="c_pack" placeholder="مثال: فله">
+<div class="row"><div><label>وزن / حجم</label><input id="c_weight" placeholder="مثال: 20 تن"></div><div><label>تعداد بسته</label><input id="c_count" inputmode="numeric" placeholder="مثال: 1"></div></div>
+<label>ارزش تقریبی کالا (ریال)</label><input id="c_value" inputmode="numeric">
+<label>توضیحات</label><textarea id="c_note"></textarea>
+<button class="primary" onclick="saveCargo()">ذخیره اطلاعات بار</button><div id="cmsg"></div></div></section>
+
+<section id="route" class="section"><div class="card"><h2>📍 اطلاعات فرستنده و گیرنده</h2>
+<h3>فرستنده</h3><label>نام</label><input id="s_name"><label>نام خانوادگی / نام شرکت</label><input id="s_family"><label>شماره همراه</label><input id="s_phone">
+<h3>گیرنده</h3><label>نام</label><input id="r_name"><label>نام خانوادگی / نام شرکت</label><input id="r_family"><label>شماره همراه</label><input id="r_phone">
+<h3>مسیر</h3><div class="row"><div><label>مبدأ</label><input id="rt_origin"></div><div><label>مقصد</label><input id="rt_dest"></div></div>
+<label>تاریخ شروع حمل</label><input id="rt_date" placeholder="1405/08/24">
+<label>ساعت شروع حمل (اختیاری)</label><input id="rt_time" type="time">
+<label>مبلغ کل کرایه (ریال)</label><input id="rt_fare" inputmode="numeric">
+<label>پیش‌کرایه (ریال)</label><input id="rt_pre" inputmode="numeric">
+<label>پس‌کرایه (ریال)</label><input id="rt_post" inputmode="numeric">
+<button class="primary" onclick="saveRoute()">ذخیره مسیر</button><div id="rmsg"></div></div></section>
+
+<section id="review" class="section"><div class="card"><h2>🔎 بررسی اطلاعات</h2><div id="checks"></div><button class="primary" onclick="openConfirm()">نمایش خلاصه و تأیید نهایی</button></div></section>
+</main>
+
+<div id="modal"><div class="modalbox"><h2>✅ خلاصه اطلاعات حمل</h2><div id="summary"></div>
+<div class="status note"><b>تأیید شما به معنی صدور خودکار نیست.</b> پس از تأیید، فقط اطلاعات آماده‌شده برای ورود به سامانه مجاز نمایش داده می‌شود.</div>
+<div class="grid"><button class="secondary" onclick="closeModal()">بازگشت و ویرایش</button><button class="primary" onclick="finalConfirm()">تأیید اطلاعات حمل واقعی</button></div>
+<div id="finalmsg"></div></div></div>
+
+<footer>
+<button class="secondary" onclick="exportData()">⬇️ خروجی پشتیبان</button>
+<button class="danger" onclick="clearAll()">🗑️ پاک کردن اطلاعات</button>
+</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const fields={
+vehicle:['v_plate','v_capacity','v_type','v_ins','v_active'],
+driver:['d_name','d_license','d_phone','d_job','d_rank'],
+cargo:['c_name','c_pack','c_weight','c_count','c_value','c_note'],
+route:['s_name','s_family','s_phone','r_name','r_family','r_phone','rt_origin','rt_dest','rt_date','rt_time','rt_fare','rt_pre','rt_post']
+};
+function load(){
+ for(const k in fields){const o=JSON.parse(localStorage.getItem('barbot_'+k)||'{}');fields[k].forEach(id=>{if(o[id]!==undefined)$(id).value=o[id]})}
+ check();
+}
+function save(k,msg){const o={};fields[k].forEach(id=>o[id]=$(id).value.trim());localStorage.setItem('barbot_'+k,JSON.stringify(o));$(msg).innerHTML='<div class="status ok">✓ اطلاعات ذخیره شد.</div>';check();}
+function saveVehicle(){save('vehicle','vmsg')} function saveDriver(){save('driver','dmsg')} function saveCargo(){save('cargo','cmsg')} function saveRoute(){save('route','rmsg')}
+function get(k){const o={};fields[k].forEach(id=>o[id]=$(id).value.trim());return o}
+function check(){
+ const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
+ const tests=[
+ ['خودرو: پلاک',!!v.v_plate],['خودرو: ظرفیت',!!v.v_capacity],['خودرو: نوع بارگیر',!!v.v_type],
+ ['راننده: نام',!!d.d_name],['راننده: گواهینامه',!!d.d_license],
+ ['بار: نام کالا',!!c.c_name],['بار: نوع بسته‌بندی',!!c.c_pack],['بار: وزن/حجم',!!c.c_weight],
+ ['مسیر: فرستنده',!!sName(r)],['مسیر: گیرنده',!!rName(r)],['مسیر: مبدأ',!!r.rt_origin],['مسیر: مقصد',!!r.rt_dest],['تاریخ شروع حمل',!!r.rt_date]
+ ];
+ $('checks').innerHTML=tests.map(x=>'<div class="status '+(x[1]?'ok':'bad')+'">'+(x[1]?'✓':'✕')+' '+x[0]+'</div>').join('');
+ return tests.every(x=>x[1]);
+}
+function sName(r){return r.s_name||r.s_family} function rName(r){return r.r_name||r.r_family}
+function go(id){document.querySelector('[data-s="'+id+'"]').click()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.s).classList.add('active');if(b.dataset.s==='review')check()});
+function openConfirm(){
+ if(!check()){alert('بعضی اطلاعات ضروری ناقص است. موارد قرمز را تکمیل کنید.');return}
+ const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
+ $('summary').innerHTML=`
+ <div class="item"><b>🚚 خودرو:</b> ${esc(v.v_plate)} | ${esc(v.v_capacity)} | ${esc(v.v_type)}</div>
+ <div class="item"><b>👤 راننده:</b> ${esc(d.d_name)} | گواهینامه: ${esc(d.d_license)}</div>
+ <div class="item"><b>📦 بار:</b> ${esc(c.c_name)} | ${esc(c.c_pack)} | ${esc(c.c_weight)}</div>
+ <div class="item"><b>📍 مسیر:</b> ${esc(r.rt_origin)} ← ${esc(r.rt_dest)}</div>
+ <div class="item"><b>📅 تاریخ:</b> ${esc(r.rt_date)} ${esc(r.rt_time)}</div>
+ <div class="item"><b>💰 کرایه:</b> ${esc(r.rt_fare||'ثبت نشده')} ریال</div>`;
+ $('finalmsg').innerHTML='';$('modal').style.display='flex';
+}
+function esc(x){return String(x||'—').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function closeModal(){$('modal').style.display='none'}
+function finalConfirm(){
+ const stamp=new Date().toLocaleString('fa-IR');
+ $('finalmsg').innerHTML='<div class="status ok">✓ اطلاعات حمل واقعی در این دستگاه تأیید شد: '+stamp+'<br>مرحله صدور خودکار انجام نشده است.</div>';
+ localStorage.setItem('barbot_last_confirm',stamp);
+}
+function exportData(){
+ const out={};for(const k in fields)out[k]=get(k);
+ const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='barbarg-backup.json';a.click();URL.revokeObjectURL(a.href);
+}
+function clearAll(){if(confirm('همه اطلاعات ذخیره‌شده از این مرورگر پاک شود؟')){for(const k in fields)localStorage.removeItem('barbot_'+k);location.reload()}}
+load();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+</script>
+</body></html>
