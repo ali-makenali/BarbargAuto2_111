@@ -237,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         .put("Bearing", location.bearing.toDouble())
         .put("NumberOfSatellite", 0)
         .put("PDOP", 0)
-        .put("GPSSpeed", location.speed.toDouble())
+        .put("GPSSpeed", (location.speed * 3.6f).toInt())
         .put("GPSMaxSpeed", 0)
         .put("GPSTotalTraveledDistance", 0)
 
