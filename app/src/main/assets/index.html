@@ -67,7 +67,7 @@ footer button{font-size:13px;padding:10px}
 
 <section id="driver" class="section"><div class="card"><h2>👤 مشخصات راننده</h2>
 <label>نام و نام خانوادگی</label><input id="d_name">
-<div class="row"><div><label>شماره گواهینامه</label><input id="d_license"></div><div><label>شماره همراه</label><input id="d_phone" inputmode="numeric"></div></div>
+<div class="row"><div><label>کد ملی راننده</label><input id="d_national" inputmode="numeric" maxlength="10"></div><div><label>شماره همراه</label><input id="d_phone" inputmode="numeric"></div></div>
 <label>وضعیت اشتغال</label><select id="d_job"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
 <label>رتبه (در صورت وجود)</label><input id="d_rank">
 <button class="primary" onclick="saveDriver()">ذخیره راننده</button><div id="dmsg"></div></div></section>
@@ -108,22 +108,51 @@ footer button{font-size:13px;padding:10px}
 const $=id=>document.getElementById(id);
 const fields={
 vehicle:['v_plate','v_capacity','v_type','v_ins','v_active'],
-driver:['d_name','d_license','d_phone','d_job','d_rank'],
+driver:['d_name','d_national','d_phone','d_job','d_rank'],
 cargo:['c_name','c_pack','c_weight','c_count','c_value','c_note'],
 route:['s_name','s_family','s_phone','r_name','r_family','r_phone','rt_origin','rt_dest','rt_date','rt_time','rt_fare','rt_pre','rt_post']
 };
 function load(){
- for(const k in fields){const o=JSON.parse(localStorage.getItem('barbot_'+k)||'{}');fields[k].forEach(id=>{if(o[id]!==undefined)$(id).value=o[id]})}
- check();
+ for(const k in fields){
+   let o={};
+   try {
+     if(window.BarbargNative){const rows=JSON.parse(window.BarbargNative.listLocalRecords(k)||'[]');if(rows.length)o=rows[0].data||{};}
+     else o=JSON.parse(localStorage.getItem('barbot_'+k)||'{}');
+   } catch(e) { o=JSON.parse(localStorage.getItem('barbot_'+k)||'{}'); }
+   fields[k].forEach(id=>{if(o[id]!==undefined)$(id).value=o[id]});
+ }
+ refreshCounts(); check();
 }
-function save(k,msg){const o={};fields[k].forEach(id=>o[id]=$(id).value.trim());localStorage.setItem('barbot_'+k,JSON.stringify(o));$(msg).innerHTML='<div class="status ok">✓ اطلاعات ذخیره شد.</div>';check();}
+function recordKey(k,o){
+ if(k==='vehicle')return String(o.v_plate||'').replace(/\\s+/g,'').toUpperCase();
+ if(k==='driver')return String(o.d_national||'').trim();
+ return 'current';
+}
+function refreshCounts(){
+ if(!window.BarbargNative)return;
+ ['vehicle','driver'].forEach(k=>{
+  try{const n=JSON.parse(window.BarbargNative.listLocalRecords(k)||'[]').length;
+   const el=$(k==='vehicle'?'vmsg':'dmsg');if(el)el.innerHTML='<div class="status ok">تعداد '+(k==='vehicle'?'خودروهای':'رانندگان')+' ذخیره‌شده: '+n+'</div>';
+  }catch(e){}
+ });
+}
+function save(k,msg){
+ const o={};fields[k].forEach(id=>o[id]=$(id).value.trim());
+ const key=recordKey(k,o);
+ if((k==='vehicle'||k==='driver')&&!key){$(msg).innerHTML='<div class="status bad">برای ذخیره، پلاک یا کد ملی را وارد کنید.</div>';return;}
+ let ok=true;
+ if(window.BarbargNative){ok=window.BarbargNative.saveLocalRecord(k,key||'current',JSON.stringify(o));}
+ else localStorage.setItem('barbot_'+k,JSON.stringify(o));
+ $(msg).innerHTML='<div class="status '+(ok?'ok':'bad')+'">'+(ok?'✓ در بانک اطلاعاتی دستگاه ذخیره شد.':'ذخیره‌سازی ناموفق بود.')+'</div>';
+ refreshCounts();check();
+}
 function saveVehicle(){save('vehicle','vmsg')} function saveDriver(){save('driver','dmsg')} function saveCargo(){save('cargo','cmsg')} function saveRoute(){save('route','rmsg')}
 function get(k){const o={};fields[k].forEach(id=>o[id]=$(id).value.trim());return o}
 function check(){
  const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
  const tests=[
  ['خودرو: پلاک',!!v.v_plate],['خودرو: ظرفیت',!!v.v_capacity],['خودرو: نوع بارگیر',!!v.v_type],
- ['راننده: نام',!!d.d_name],['راننده: گواهینامه',!!d.d_license],
+ ['راننده: نام',!!d.d_name],['راننده: کد ملی',!!d.d_national],['راننده: همراه',!!d.d_phone],
  ['بار: نام کالا',!!c.c_name],['بار: نوع بسته‌بندی',!!c.c_pack],['بار: وزن/حجم',!!c.c_weight],
  ['مسیر: فرستنده',!!sName(r)],['مسیر: گیرنده',!!rName(r)],['مسیر: مبدأ',!!r.rt_origin],['مسیر: مقصد',!!r.rt_dest],['تاریخ شروع حمل',!!r.rt_date]
  ];
@@ -138,7 +167,7 @@ function openConfirm(){
  const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
  $('summary').innerHTML=`
  <div class="item"><b>🚚 خودرو:</b> ${esc(v.v_plate)} | ${esc(v.v_capacity)} | ${esc(v.v_type)}</div>
- <div class="item"><b>👤 راننده:</b> ${esc(d.d_name)} | گواهینامه: ${esc(d.d_license)}</div>
+ <div class="item"><b>👤 راننده:</b> ${esc(d.d_name)} | کد ملی: ${esc(d.d_national)}</div>
  <div class="item"><b>📦 بار:</b> ${esc(c.c_name)} | ${esc(c.c_pack)} | ${esc(c.c_weight)}</div>
  <div class="item"><b>📍 مسیر:</b> ${esc(r.rt_origin)} ← ${esc(r.rt_dest)}</div>
  <div class="item"><b>📅 تاریخ:</b> ${esc(r.rt_date)} ${esc(r.rt_time)}</div>
