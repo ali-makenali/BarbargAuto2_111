@@ -63,14 +63,14 @@ footer button{font-size:13px;padding:10px}
 <div class="row"><div><label>ظرفیت</label><input id="v_capacity" placeholder="مثال: 20 تن"></div><div><label>نوع بارگیر</label><input id="v_type" placeholder="مثال: باری"></div></div>
 <label>وضعیت بیمه شخص ثالث</label><select id="v_ins"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
 <label>وضعیت فعالیت</label><select id="v_active"><option value="">انتخاب کنید</option><option>فعال</option><option>غیرفعال</option></select>
-<button class="primary" onclick="saveVehicle()">ذخیره خودرو</button><div id="vmsg"></div></div></section>
+<button class="primary" onclick="saveVehicle()">ذخیره خودرو</button><div id="vmsg"></div><h3>فهرست خودروهای ذخیره‌شده</h3><div id="vehicleList"></div></div></section>
 
 <section id="driver" class="section"><div class="card"><h2>👤 مشخصات راننده</h2>
 <label>نام و نام خانوادگی</label><input id="d_name">
 <div class="row"><div><label>کد ملی راننده</label><input id="d_national" inputmode="numeric" maxlength="10"></div><div><label>شماره همراه</label><input id="d_phone" inputmode="numeric"></div></div>
 <label>وضعیت اشتغال</label><select id="d_job"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
 <label>رتبه (در صورت وجود)</label><input id="d_rank">
-<button class="primary" onclick="saveDriver()">ذخیره راننده</button><div id="dmsg"></div></div></section>
+<button class="primary" onclick="saveDriver()">ذخیره راننده</button><div id="dmsg"></div><h3>فهرست رانندگان ذخیره‌شده</h3><div id="driverList"></div></div></section>
 
 <section id="cargo" class="section"><div class="card"><h2>📦 مشخصات کالا</h2>
 <label>نام کالا</label><input id="c_name" placeholder="مثال: ماسه">
@@ -137,8 +137,26 @@ function recordKey(k,o){
 function refreshCounts(){
  if(!window.BarbargNative)return;
  ['vehicle','driver'].forEach(k=>{
-  try{const n=JSON.parse(window.BarbargNative.listLocalRecords(k)||'[]').length;
-   const el=$(k==='vehicle'?'vmsg':'dmsg');if(el)el.innerHTML='<div class="status ok">تعداد '+(k==='vehicle'?'خودروهای':'رانندگان')+' ذخیره‌شده: '+n+'</div>';
+  try{
+   const rows=JSON.parse(window.BarbargNative.listLocalRecords(k)||'[]');
+   const el=$(k==='vehicle'?'vmsg':'dmsg');
+   if(el)el.innerHTML='<div class="status ok">تعداد '+(k==='vehicle'?'خودروهای':'رانندگان')+' ذخیره‌شده: '+rows.length+'</div>';
+   const list=$(k==='vehicle'?'vehicleList':'driverList');
+   if(list){
+    list.innerHTML='';
+    rows.forEach(row=>{
+     const data=row.data||{};
+     const button=document.createElement('button');
+     button.className='secondary';
+     button.style.display='block';button.style.width='100%';button.style.margin='6px 0';
+     button.textContent=k==='vehicle'?(data.v_plate||row.key):(data.d_name||'راننده')+' — '+(data.d_national||row.key);
+     button.onclick=()=>{
+      fields[k].forEach(id=>{if($(id))$(id).value=data[id]||''});
+      check();
+     };
+     list.appendChild(button);
+    });
+   }
   }catch(e){}
  });
 }
