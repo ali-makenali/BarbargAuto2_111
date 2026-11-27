@@ -76,7 +76,7 @@ class UtcmsApi {
         mobile: String
     ): ApiResult {
         if (!isValidNationalCode(nationalCode)) {
-            return reject(account, "کد ملی/شناسه ملی باید ۱۰ یا ۱۱ رقم معتبر باشد")
+            return reject(account, "کد ملی راننده باید ۱۰ رقم معتبر باشد")
         }
         val mobileNumber = mobile.toLongOrNull()
         if (mobile.length != 11 || !mobile.startsWith("09") || mobileNumber == null) {
@@ -351,8 +351,8 @@ class UtcmsApi {
 
     private fun isValidNationalCode(code: String): Boolean {
         if (code.any { it !in '0'..'9' }) return false
-        // The UTCMS guide accepts 10- or 11-character national/identity codes.
-        if (code.length == 11) return true
+        // Driver login uses a natural person's 10-digit Iranian national code.
+        // Eleven-digit legal-entity identifiers must not be accepted as driver IDs.
         if (code.length != 10 || code.all { it == code[0] }) return false
 
         val check = code[9].digitToInt()
