@@ -21,7 +21,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
-import ir.barbarg.auto.BuildConfig\nimport ir.barbarg.auto.data.LocalDatabase
+import ir.barbarg.auto.BuildConfig
+import ir.barbarg.auto.data.LocalDatabase
 import ir.barbarg.auto.security.ServiceCredentialStore
 import ir.barbarg.auto.net.UtcmsApi
 import kotlinx.coroutines.launch
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         localDb = LocalDatabase(this)
         credentialStore = ServiceCredentialStore(this)
+        provisionServiceCredentials()
         lastTraceCode = localDb.latestIssuedTrace()
         // ورود به خود اپلیکیشن آزاد است؛ احراز هویت UTCMS فقط هنگام اولین عملیات صدور انجام می‌شود.
         openDashboard()
