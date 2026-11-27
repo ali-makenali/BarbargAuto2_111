@@ -386,8 +386,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun ensureServiceCredentials(): Boolean {
+        if (companyCode.isNotBlank() && servicePassword.isNotEmpty()) return true
+        val credentials = try { credentialStore.load() } catch (_: Exception) { null }
+        if (credentials == null) {
+            showServiceSetupDialog()
+            return false
+        }
+        companyCode = credentials.companyCode
+        servicePassword.fill('\u0000')
+        servicePassword = credentials.password.copyOf()
+        credentials.password.fill('\u0000')
+        return true
+    }
+
     private fun runGpsOperation(label: String, operation: suspend (JSONObject) -> UtcmsApi.ApiResult) {
         runOnUiThread {
+            if (!ensureServiceCredentials()) return@runOnUiThread
             if (lastTraceCode.isBlank()) {
                 notifyPage(false, "ابتدا باید باربرگ صادر شود و کد رهگیری دریافت شود.")
                 return@runOnUiThread
