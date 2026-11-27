@@ -321,7 +321,7 @@ class MainActivity : AppCompatActivity() {
                     if (queued != null) submitBol(queued)
                 } else {
                     credentials.password.fill('\u0000')
-                    showLoginDialog()
+                    showLoginDialog(national, mobile)
                 }
             }
         }
