@@ -111,6 +111,55 @@ class LocalDatabase(context: Context) : SQLiteOpenHelper(context, "barbarg_local
     }
 
     @Synchronized
+    fun isProfileVerified(nationalCode: String, mobile: String): Boolean {
+        return readableDatabase.rawQuery(
+            "SELECT 1 FROM auth_profiles WHERE national_code=? AND mobile=? LIMIT 1",
+            arrayOf(nationalCode, mobile)
+        ).use { it.moveToFirst() }
+    }
+
+    @Synchronized
+    fun saveBolFailure(request: JSONObject, response: JSONObject) {
+        val now = System.currentTimeMillis()
+        val localId = "FAILED-$now"
+        val values = ContentValues().apply {
+            put("trace_code", localId)
+            put("request_json", request.toString())
+            put("response_json", response.toString())
+            put("status", "FAILED")
+            put("created_at", now)
+            put("updated_at", now)
+        }
+        writableDatabase.insertWithOnConflict("bol_history", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    @Synchronized
+    fun bolHistory(): JSONArray {
+        val result = JSONArray()
+        readableDatabase.rawQuery(
+            "SELECT trace_code,status,response_json,created_at FROM bol_history ORDER BY created_at DESC LIMIT 100",
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result.put(JSONObject()
+                    .put("traceCode", cursor.getString(0))
+                    .put("status", cursor.getString(1))
+                    .put("response", JSONObject(cursor.getString(2)))
+                    .put("createdAt", cursor.getLong(3)))
+            }
+        }
+        return result
+    }
+
+    @Synchronized
+    fun latestIssuedTrace(): String {
+        return readableDatabase.rawQuery(
+            "SELECT trace_code FROM bol_history WHERE status='ISSUED' ORDER BY created_at DESC LIMIT 1",
+            null
+        ).use { if (it.moveToFirst()) it.getString(0) else "" }
+    }
+
+    @Synchronized
     fun saveBol(traceCode: String, request: JSONObject, response: JSONObject, status: String) {
         require(traceCode.isNotBlank())
         val now = System.currentTimeMillis()
