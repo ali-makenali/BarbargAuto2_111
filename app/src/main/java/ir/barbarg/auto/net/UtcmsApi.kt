@@ -3,6 +3,7 @@ package ir.barbarg.auto.net
 import ir.barbarg.auto.security.ServiceHash
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -51,7 +52,7 @@ class UtcmsApi {
             "PlaqueID",
             "PlaqueType",
             "DriverNationalCode",
-            "OWNERNATIONALID",
+            "OwnerNationalID",
             "SenderType",
             "SenderName",
             "RecieverType",
@@ -193,12 +194,20 @@ class UtcmsApi {
             return reject(account, "مختصات GPS معتبر نیست")
         }
 
-        // UTCMS.BOL.WS guide defines WS06 arguments as BOLTraceCode,
-        // EventTime and EventPosition (GPSCnt); it does not accept BOLPositions.
+        // The supplied ITMBOL WSDL defines WS06 as BOLTraceCode plus
+        // BOLPositions: ArrayOfDeviceInfoCnt (DeviceInfoCnt[]).
+        val point = JSONObject()
+            .put("EventType", "SimplePoint")
+            .put("GPSStatus", 0)
+            .put("IOStatus", 0)
+            .put("EventTime", eventTime.toLong())
+            .put("EventPosition", JSONObject(eventPosition.toString()))
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("EventTime", eventTime)
-            .put("EventPosition", JSONObject(eventPosition.toString()))
+            .put("BOLPositions", JSONObject().put(
+                "DeviceInfoCnt",
+                JSONArray().put(point)
+            ))
         return call("WS06_InsertBOLTrack", account, body)
     }
 
