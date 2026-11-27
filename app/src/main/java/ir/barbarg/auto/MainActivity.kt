@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         dlg.show()
     }
 
-    private fun showLoginDialog() {
+    private fun showLoginDialog(prefillNational: String = "", prefillMobile: String = "") {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(42, 12, 42, 0) }
         fun field(label: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(this).apply {
             hint = label
@@ -105,8 +105,8 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             box.addView(this)
         }
-        val national = field("کد ملی راننده", InputType.TYPE_CLASS_NUMBER)
-        val mobile = field("شماره همراه ثبت‌شده در UTCMS", InputType.TYPE_CLASS_PHONE)
+        val national = field("کد ملی راننده", InputType.TYPE_CLASS_NUMBER).apply { setText(prefillNational) }
+        val mobile = field("شماره همراه ثبت‌شده در UTCMS", InputType.TYPE_CLASS_PHONE).apply { setText(prefillMobile) }
         val help = TextView(this).apply { text = "برای احراز هویت، کد ملی و شماره همراه ثبت‌شده را وارد کنید."; setPadding(0, 16, 0, 0) }
         box.addView(help)
         val dlg = AlertDialog.Builder(this).setTitle("ورود و احراز هویت").setView(box)
@@ -227,6 +227,38 @@ class MainActivity : AppCompatActivity() {
             try { localDb.delete(type, key) } catch (_: Exception) { false }
 
         @JavascriptInterface
+        fun connectService(nationalCode: String, mobile: String) {
+            runOnUiThread {
+                if (nationalCode.isBlank() || mobile.isBlank()) {
+                    notifyPage(false, "ابتدا کد ملی و شماره همراه راننده را در بخش راننده ثبت کنید.")
+                    return@runOnUiThread
+                }
+                if (serviceAuthenticated && localDb.isProfileVerified(nationalCode, mobile)) {
+                    loadRequiredBaseInfo()
+                    return@runOnUiThread
+                }
+                val credentials = credentialStore.load()
+                if (credentials == null) {
+                    showServiceSetupDialog()
+                    return@runOnUiThread
+                }
+                if (localDb.isProfileVerified(nationalCode, mobile)) {
+                    companyCode = credentials.companyCode
+                    servicePassword.fill('\u0000')
+                    servicePassword = credentials.password.copyOf()
+                    credentials.password.fill('\u0000')
+                    loginNationalCode = nationalCode
+                    loginMobile = mobile
+                    serviceAuthenticated = true
+                    loadRequiredBaseInfo()
+                } else {
+                    credentials.password.fill('\u0000')
+                    showLoginDialog(nationalCode, mobile)
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun getBolHistory(): String =
             try { localDb.bolHistory().toString() } catch (_: Exception) { "[]" }
 
@@ -255,15 +287,20 @@ class MainActivity : AppCompatActivity() {
         fun issueBol(json: String) {
             runOnUiThread {
                 pendingBolJson = json
-                if (serviceAuthenticated) {
-                    val queued = pendingBolJson
-                    pendingBolJson = null
-                    if (queued != null) submitBol(queued)
-                    return@runOnUiThread
-                }
                 val bol = try { JSONObject(json) } catch (_: Exception) { JSONObject() }
                 val national = bol.optString("DriverNationalCode")
                 val mobile = bol.optString("DriverMobile")
+                if (serviceAuthenticated) {
+                    val queued = pendingBolJson
+                    if (national.isNotBlank() && mobile.isNotBlank() &&
+                        localDb.isProfileVerified(national, mobile)) {
+                        pendingBolJson = null
+                        if (queued != null) submitBol(queued)
+                    } else {
+                        showLoginDialog(national, mobile)
+                    }
+                    return@runOnUiThread
+                }
                 val credentials = credentialStore.load()
                 if (credentials == null) {
                     showServiceSetupDialog()
