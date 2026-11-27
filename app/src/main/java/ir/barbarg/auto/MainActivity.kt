@@ -272,8 +272,12 @@ class MainActivity : AppCompatActivity() {
                 val secret = servicePassword.copyOf()
                 lifecycleScope.launch {
                     val result = api.getBaseInfo(UtcmsApi.Account(companyCode, secret), kind)
-                    val data = result.value ?: result.payload?.toString() ?: ""
-                    notifyBaseInfo(kind, result.success, data.ifBlank { result.errorMessage ?: "پاسخ خالی از سرویس" })
+                    val data = if (result.success) {
+                        result.value ?: result.payload?.toString() ?: "[]"
+                    } else {
+                        result.errorMessage ?: result.value ?: "دریافت اطلاعات پایه ناموفق بود"
+                    }
+                    notifyBaseInfo(kind, result.success, data)
                 }
             }
         }
