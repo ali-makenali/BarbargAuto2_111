@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         val company = BuildConfig.UTCMS_COMPANY_CODE.trim()
         val password = BuildConfig.UTCMS_SERVICE_PASSWORD.toCharArray()
         if (company.isBlank() || password.isEmpty()) {
-            password.fill('\\u0000')
+            password.fill('\u0000')
             return false
         }
         return try {
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {
             false
         } finally {
-            password.fill('\\u0000')
+            password.fill('\u0000')
         }
     }
 
