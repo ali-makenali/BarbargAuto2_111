@@ -179,16 +179,12 @@ class UtcmsApi {
             return reject(account, "مختصات GPS معتبر نیست")
         }
 
-        val devicePoint = JSONObject()
-            .put("EventType", "SimplePoint")
-            .put("GPSStatus", 1)
-            .put("IOStatus", 0)
-            .put("EventTime", eventTime.toLong())
-            .put("EventPosition", JSONObject(eventPosition.toString()))
-        val positions = JSONObject().put("DeviceInfoCnt", org.json.JSONArray().put(devicePoint))
+        // UTCMS.BOL.WS guide defines WS06 arguments as BOLTraceCode,
+        // EventTime and EventPosition (GPSCnt); it does not accept BOLPositions.
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("BOLPositions", positions)
+            .put("EventTime", eventTime)
+            .put("EventPosition", JSONObject(eventPosition.toString()))
         return call("WS06_InsertBOLTrack", account, body)
     }
 
