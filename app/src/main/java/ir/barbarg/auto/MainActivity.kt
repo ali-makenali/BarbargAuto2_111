@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        private fun submitBol(json: String) {
+        fun submitBol(json: String) {
             runOnUiThread {
                 val position = currentGps()
                 if (position == null) {
