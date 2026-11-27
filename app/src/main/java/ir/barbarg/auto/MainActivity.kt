@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         localDb = LocalDatabase(this)
         credentialStore = ServiceCredentialStore(this)
+        lastTraceCode = localDb.latestIssuedTrace()
         // ورود به خود اپلیکیشن آزاد است؛ احراز هویت UTCMS فقط هنگام اولین عملیات صدور انجام می‌شود.
         openDashboard()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -180,6 +181,7 @@ class MainActivity : AppCompatActivity() {
                         serviceAuthenticated = true
                         val queued = pendingBolJson
                         pendingBolJson = null
+                        (dashboard?.let { UtcmsBridge() })?.loadRequiredBaseInfo()
                         if (queued != null) (dashboard?.let { UtcmsBridge() })?.submitBol(queued)
                     }
                     else {
@@ -225,6 +227,31 @@ class MainActivity : AppCompatActivity() {
             try { localDb.delete(type, key) } catch (_: Exception) { false }
 
         @JavascriptInterface
+        fun getBolHistory(): String =
+            try { localDb.bolHistory().toString() } catch (_: Exception) { "[]" }
+
+        @JavascriptInterface
+        fun loadBaseInfo(kind: String) {
+            runOnUiThread {
+                if (!serviceAuthenticated) {
+                    notifyBaseInfo(kind, false, "ابتدا احراز هویت سرویس را از طریق درخواست صدور انجام دهید.")
+                    return@runOnUiThread
+                }
+                val secret = servicePassword.copyOf()
+                lifecycleScope.launch {
+                    val result = api.getBaseInfo(UtcmsApi.Account(companyCode, secret), kind)
+                    val data = result.value ?: result.payload?.toString() ?: ""
+                    notifyBaseInfo(kind, result.success, data.ifBlank { result.errorMessage ?: "پاسخ خالی از سرویس" })
+                }
+            }
+        }
+
+        fun loadRequiredBaseInfo() {
+            listOf("goodTypes", "loadingTypes", "packingTypes", "goods", "provinceCities")
+                .forEach { loadBaseInfo(it) }
+        }
+
+        @JavascriptInterface
         fun issueBol(json: String) {
             runOnUiThread {
                 pendingBolJson = json
@@ -232,10 +259,32 @@ class MainActivity : AppCompatActivity() {
                     val queued = pendingBolJson
                     pendingBolJson = null
                     if (queued != null) submitBol(queued)
-                } else if (credentialStore.hasCredentials()) {
-                    showLoginDialog()
-                } else {
+                    return@runOnUiThread
+                }
+                val bol = try { JSONObject(json) } catch (_: Exception) { JSONObject() }
+                val national = bol.optString("DriverNationalCode")
+                val mobile = bol.optString("DriverMobile")
+                val credentials = credentialStore.load()
+                if (credentials == null) {
                     showServiceSetupDialog()
+                    return@runOnUiThread
+                }
+                if (national.isNotBlank() && mobile.isNotBlank() &&
+                    localDb.isProfileVerified(national, mobile)) {
+                    companyCode = credentials.companyCode
+                    servicePassword.fill('\u0000')
+                    servicePassword = credentials.password.copyOf()
+                    credentials.password.fill('\u0000')
+                    loginNationalCode = national
+                    loginMobile = mobile
+                    serviceAuthenticated = true
+                    loadRequiredBaseInfo()
+                    val queued = pendingBolJson
+                    pendingBolJson = null
+                    if (queued != null) submitBol(queued)
+                } else {
+                    credentials.password.fill('\u0000')
+                    showLoginDialog()
                 }
             }
         }
@@ -263,6 +312,12 @@ class MainActivity : AppCompatActivity() {
                             localDb.saveBol(trace, bol, result.payload ?: JSONObject().put("value", result.value ?: ""), "ISSUED")
                             notifyPage(true, "باربرگ صادر شد. کد رهگیری: " + trace, trace)
                         } else {
+                            val failure = JSONObject()
+                                .put("errorCode", result.errorCode ?: JSONObject.NULL)
+                                .put("errorMessage", result.errorMessage ?: "درخواست صدور رد شد")
+                                .put("httpCode", result.httpCode ?: JSONObject.NULL)
+                                .put("raw", result.value ?: result.payload?.toString() ?: "")
+                            localDb.saveBolFailure(bol, failure)
                             notifyPage(false, result.errorMessage ?: ("پاسخ صدور: " + (result.value ?: result.payload)))
                         }
                     } catch (e: Exception) {
@@ -336,6 +391,16 @@ class MainActivity : AppCompatActivity() {
         .put("GPSSpeed", (location.speed * 3.6f).toInt())
         .put("GPSMaxSpeed", 0)
         .put("GPSTotalTraveledDistance", 0)
+
+    private fun notifyBaseInfo(kind: String, success: Boolean, data: String) {
+        val payload = JSONObject().put("kind", kind).put("success", success).put("data", data)
+        dashboard?.post {
+            dashboard?.evaluateJavascript(
+                "window.onBaseInfo && window.onBaseInfo(" + JSONObject.quote(payload.toString()) + ")",
+                null
+            )
+        }
+    }
 
     private fun notifyPage(success: Boolean, message: String, trace: String = "") {
         val payload = JSONObject().put("success", success).put("message", message).put("traceCode", trace)
