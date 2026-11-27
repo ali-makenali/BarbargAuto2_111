@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun serviceSetupUnavailable() {
-        notifyPage(false, "اعتبارنامه وب‌سرویس در پیکربندی امن برنامه تنظیم نشده است. با مدیر سامانه تماس بگیرید؛ راننده نباید شناسه فنی یا رمز سرویس وارد کند.")
+        notifyPage(false, "اتصال به سامانه باربرگ در دسترس نیست. لطفاً بعداً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.")
     }
 
     private fun showLoginDialog(prefillNational: String = "", prefillMobile: String = "") {
