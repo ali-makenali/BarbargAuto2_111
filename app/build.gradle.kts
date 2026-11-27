@@ -18,8 +18,8 @@ android {
         // Supply through ~/.gradle/gradle.properties or CI secrets; never commit credentials.
         val utcCompany = providers.gradleProperty("UTCMS_COMPANY_CODE").orNull ?: ""
         val utcPassword = providers.gradleProperty("UTCMS_SERVICE_PASSWORD").orNull ?: ""
-        buildConfigField("String", "UTCMS_COMPANY_CODE", "\\\"${utcCompany}\\\"")
-        buildConfigField("String", "UTCMS_SERVICE_PASSWORD", "\\\"${utcPassword}\\\"")
+        buildConfigField("String", "UTCMS_COMPANY_CODE", "\"${utcCompany}\"")
+        buildConfigField("String", "UTCMS_SERVICE_PASSWORD", "\"${utcPassword}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
