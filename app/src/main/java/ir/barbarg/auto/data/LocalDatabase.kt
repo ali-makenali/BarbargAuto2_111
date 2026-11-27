@@ -52,7 +52,7 @@ class LocalDatabase(context: Context) : SQLiteOpenHelper(context, "barbarg_local
 
     @Synchronized
     fun put(type: String, key: String, payload: JSONObject): Boolean {
-        require(type in setOf("vehicle", "driver", "cargo", "route", "bol"))
+        require(type in setOf("vehicle", "driver", "cargo", "route", "bol", "baseinfo"))
         require(key.isNotBlank())
         val now = System.currentTimeMillis()
         val db = writableDatabase
@@ -68,6 +68,15 @@ class LocalDatabase(context: Context) : SQLiteOpenHelper(context, "barbarg_local
             put("updated_at", now)
         }
         return db.insertWithOnConflict("local_records", null, values, SQLiteDatabase.CONFLICT_REPLACE) != -1L
+    }
+
+    @Synchronized
+    fun get(type: String, key: String): JSONObject? {
+        require(type in setOf("vehicle", "driver", "cargo", "route", "bol", "baseinfo"))
+        return readableDatabase.rawQuery(
+            "SELECT payload FROM local_records WHERE record_type=? AND record_key=? LIMIT 1",
+            arrayOf(type, key)
+        ).use { if (it.moveToFirst()) JSONObject(it.getString(0)) else null }
     }
 
     @Synchronized
