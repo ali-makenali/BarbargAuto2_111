@@ -42,11 +42,11 @@ footer button{font-size:13px;padding:10px}
 <button class="tab" data-s="vehicle">🚚 خودرو</button>
 <button class="tab" data-s="driver">👤 راننده</button>
 <button class="tab" data-s="cargo">📦 بار</button>
-<button class="tab" data-s="route">📍 مسیر</button>
+<button class="tab" data-s="route">📍 مسیر</button><button class="tab" data-s="issue">🧾 صدور باربرگ</button>
 </div>
 
 <section id="home" class="section active">
-<div class="card"><h2>شروع حمل جدید</h2>
+<div class="card"><h2>داشبورد عملیات</h2><div class="grid"><div class="item"><b>آخرین کد رهگیری</b><div id="dashboardTrace">هنوز ثبت نشده</div></div><div class="item"><b>وضعیت ارتباط</b><div id="dashboardApi">احراز هویت هنگام صدور انجام می‌شود</div></div></div><div id="dashboardHistory"></div></div><div class="card"><h2>شروع حمل جدید</h2>
 <p class="small">اطلاعات خودرو، راننده، بار و مسیر را ذخیره کن. برنامه قبل از مرحله نهایی همه موارد را بررسی می‌کند.</p>
 <div class="grid">
 <button class="secondary" onclick="go('vehicle')">🚚 اطلاعات خودرو</button>
@@ -58,7 +58,7 @@ footer button{font-size:13px;padding:10px}
 </section>
 
 <section id="vehicle" class="section"><div class="card"><h2>🚚 مشخصات خودرو</h2>
-<label>پلاک</label><input id="v_plate" placeholder="مثال: 66 ع 267 ایران 42">
+<label>پلاک</label><input id="v_plate" placeholder="مثال: 66 ع 267 ایران 42"><div class="row"><div><label>شماره سریال پلاک</label><input id="v_plaque_sn" inputmode="numeric"></div><div><label>نوع پلاک</label><select id="v_plaque_type"><option value="">انتخاب کنید</option><option value="IRI">ایران</option><option value="KSH">کیش</option><option value="QSM">قشم</option><option value="CHB">چابهار</option><option value="ARS">ارس</option><option value="ANZ">انزلی</option><option value="ARV">اروند</option><option value="MAK">ماکو</option></select></div></div><label>کد ملی مالک خودرو (اگر مالک راننده است، کد ملی راننده)</label><input id="v_owner_national" inputmode="numeric" maxlength="11">
 <div class="row"><div><label>ظرفیت</label><input id="v_capacity" placeholder="مثال: 20 تن"></div><div><label>نوع بارگیر</label><input id="v_type" placeholder="مثال: باری"></div></div>
 <label>وضعیت بیمه شخص ثالث</label><select id="v_ins"><option value="">انتخاب کنید</option><option>دارد</option><option>ندارد</option></select>
 <label>وضعیت فعالیت</label><select id="v_active"><option value="">انتخاب کنید</option><option>فعال</option><option>غیرفعال</option></select>
@@ -74,8 +74,8 @@ footer button{font-size:13px;padding:10px}
 <section id="cargo" class="section"><div class="card"><h2>📦 مشخصات کالا</h2>
 <label>نام کالا</label><input id="c_name" placeholder="مثال: ماسه">
 <label>نوع بسته‌بندی</label><input id="c_pack" placeholder="مثال: فله">
-<div class="row"><div><label>وزن / حجم</label><input id="c_weight" placeholder="مثال: 20 تن"></div><div><label>تعداد بسته</label><input id="c_count" inputmode="numeric" placeholder="مثال: 1"></div></div>
-<label>ارزش تقریبی کالا (ریال)</label><input id="c_value" inputmode="numeric">
+<div class="row"><div><label>وزن خالص (کیلوگرم)</label><input id="c_weight" inputmode="decimal" placeholder="مثال: 20000"></div><div><label>مقدار / تعداد بسته</label><input id="c_count" inputmode="decimal" placeholder="مثال: 1"></div></div>
+<label>ارزش تقریبی کالا (ریال)</label><input id="c_value" inputmode="numeric"><label>نوع کالا (فهرست رسمی UTCMS)</label><select id="api_good_id"><option value="">پس از اتصال بارگذاری می‌شود</option></select><label>گروه کالا</label><select id="api_good_type"><option value="">پس از اتصال بارگذاری می‌شود</option></select><label>نوع بسته‌بندی</label><select id="api_packing_id"><option value="">پس از اتصال بارگذاری می‌شود</option></select><label>هزینه بیمه (ریال)</label><input id="api_insurance" inputmode="numeric" value="0">
 <label>توضیحات</label><textarea id="c_note"></textarea>
 <button class="primary" onclick="saveCargo()">ذخیره اطلاعات بار</button><div id="cmsg"></div></div></section>
 
@@ -89,7 +89,7 @@ footer button{font-size:13px;padding:10px}
 <label>پیش‌کرایه (ریال)</label><input id="rt_pre" inputmode="numeric">
 <label>پس‌کرایه (ریال)</label><input id="rt_post" inputmode="numeric">
 <button class="primary" onclick="saveRoute()">ذخیره مسیر</button><div id="rmsg"></div></div></section>
-
+<section id="issue" class="section"><div class="card"><h2>🧾 صدور باربرگ واقعی</h2><p class="small">کدهای کالا، گروه کالا، بسته‌بندی و شهر از فهرست رسمی UTCMS دریافت می‌شوند.</p><label>شماره سریال سند حمل (طبق سریال تخصیصی شرکت)</label><input id="issue_serial" inputmode="numeric"><div class="row"><div><label>نوع فرستنده</label><select id="api_sender_type"><option value="1">حقیقی</option><option value="2">حقوقی</option></select></div><div><label>نوع گیرنده</label><select id="api_receiver_type"><option value="1">حقیقی</option><option value="2">حقوقی</option></select></div></div><div class="row"><div><label>شهر بارگیری</label><select id="api_origin_city"><option value="">انتخاب کنید</option></select></div><div><label>شهر تخلیه</label><select id="api_dest_city"><option value="">انتخاب کنید</option></select></div></div><button class="secondary" onclick="refreshBaseInfo()">↻ دریافت فهرست‌های رسمی UTCMS</button><div id="baseInfoStatus" class="status note">فهرست‌ها پس از احراز هویت سرویس دریافت می‌شوند.</div><div class="grid"><button class="primary" onclick="issueRealBol()">ارسال درخواست صدور</button><button class="secondary" onclick="startRealTransport()">شروع حمل</button><button class="secondary" onclick="trackRealTransport()">ثبت موقعیت GPS</button><button class="danger" onclick="endRealTransport()">پایان حمل</button></div><div id="apiStatus" class="status note">هنوز درخواستی ارسال نشده است.</div><div id="traceCode" class="item">کد رهگیری: —</div></div></section>
 </main>
 
 <div id="modal"><div class="modalbox"><h2>✅ خلاصه اطلاعات حمل</h2><div id="summary"></div>
@@ -105,9 +105,9 @@ footer button{font-size:13px;padding:10px}
 <script>
 const $=id=>document.getElementById(id);
 const fields={
-vehicle:['v_plate','v_capacity','v_type','v_ins','v_active'],
+vehicle:['v_plate','v_plaque_sn','v_plaque_type','v_owner_national','v_capacity','v_type','v_ins','v_active'],
 driver:['d_name','d_national','d_phone','d_job','d_rank'],
-cargo:['c_name','c_pack','c_weight','c_count','c_value','c_note'],
+cargo:['c_name','c_pack','c_weight','c_count','c_value','c_note','api_good_id','api_good_type','api_packing_id','api_insurance'],
 route:['s_name','s_family','s_phone','r_name','r_family','r_phone','rt_origin','rt_dest','rt_date','rt_time','rt_fare','rt_pre','rt_post']
 };
 function load(){
@@ -172,7 +172,7 @@ function check(){
  ['بار: نام کالا',!!c.c_name],['بار: نوع بسته‌بندی',!!c.c_pack],['بار: وزن/حجم',!!c.c_weight],
  ['مسیر: فرستنده',!!sName(r)],['مسیر: گیرنده',!!rName(r)],['مسیر: مبدأ',!!r.rt_origin],['مسیر: مقصد',!!r.rt_dest],['تاریخ شروع حمل',!!r.rt_date]
  ];
- $('checks').innerHTML=tests.map(x=>'<div class="status '+(x[1]?'ok':'bad')+'">'+(x[1]?'✓':'✕')+' '+x[0]+'</div>').join('');
+ const checks=$('checks'); if(checks) checks.innerHTML=tests.map(x=>'<div class="status '+(x[1]?'ok':'bad')+'">'+(x[1]?'✓':'✕')+' '+x[0]+'</div>').join('');
  return tests.every(x=>x[1]);
 }
 function sName(r){return r.s_name||r.s_family} function rName(r){return r.r_name||r.r_family}
@@ -203,19 +203,17 @@ function exportData(){
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='barbarg-backup.json';a.click();URL.revokeObjectURL(a.href);
 }
 function clearAll(){if(confirm('همه اطلاعات ذخیره‌شده از این مرورگر پاک شود؟')){for(const k in fields)localStorage.removeItem('barbot_'+k);location.reload()}}
-function apiStatus(ok,msg,trace){const el=document.getElementById('apiStatus');if(!el)return;el.className='status '+(ok?'ok':'bad');el.textContent=msg||'';if(trace)document.getElementById('traceCode').textContent='کد رهگیری: '+trace;}
-window.onNativeResult=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;apiStatus(r.success,r.message,r.traceCode);if(r.success&&r.message.indexOf('شروع حمل')>=0){if(window.bolTrackTimer)clearInterval(window.bolTrackTimer);window.bolTrackTimer=setInterval(function(){if(window.BarbargNative)window.BarbargNative.sendTrack()},60000)}if(r.success&&r.message.indexOf('پایان حمل')>=0&&window.bolTrackTimer){clearInterval(window.bolTrackTimer);window.bolTrackTimer=null}}catch(e){apiStatus(false,'پاسخ برنامه قابل خواندن نیست')}};
-function issueRealBol(){
-const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route');
-const val=id=>document.getElementById(id).value.trim();
-const required=[v.v_plate,d.d_name,r.s_name,r.r_name,r.rt_origin,r.rt_dest,d.d_national,val('api_owner_code'),val('api_serial'),val('api_plaque_sn'),val('api_plaque_type'),val('api_issuer_code'),val('api_good_id'),val('api_good_type'),val('api_packing_id'),val('api_weight'),val('api_value'),val('api_origin_province'),val('api_dest_province'),val('api_origin_lat'),val('api_origin_lon'),val('api_dest_lat'),val('api_dest_lon'),r.rt_fare];
-if(required.some(x=>!String(x||'').trim())){apiStatus(false,'اطلاعات اجباری صدور یا شناسه‌های رسمی ناقص است.');return}
-const bol={PlaqueID:v.v_plate,PlaqueSN:Number(val('api_plaque_sn')),PlaqueType:val('api_plaque_type'),DriverNationalCode:d.d_national,OWNERNATIONALID:val('api_owner_code'),SenderType:Number(val('api_sender_type')||1),SenderName:r.s_name,SenderLastName:r.s_family||'',SenderMobile:r.s_phone||'',SenderAddress:r.rt_origin,RecieverType:Number(val('api_receiver_type')||1),RecieverName:r.r_name,RecieverLastName:r.r_family||'',RecieverMobile:r.r_phone||'',RecieverAddress:r.rt_dest,Freightage:Number(r.rt_fare||0),PreFreightage:Number(r.rt_pre||0),FreightageTax:Number(val('api_freight_tax')||0),CompanyCommission:Number(val('api_commission')||0),SerialNo:Number(val('api_serial')),IssuerNaCode:val('api_issuer_code'),IssueDate:val('api_issue_date')||new Date().toISOString(),LoadingPlaceAddress:r.rt_origin,OffLoadingPlaceAddress:r.rt_dest,Goods:{BOLGoodCnt:[{GoodID:Number(val('api_good_id')),WeightKg:Number(val('api_weight')),Value:Number(val('api_value')),PackingTypeID:Number(val('api_packing_id')),GoodtypeID:Number(val('api_good_type'))}]},TotalAmountPayment:Number(r.rt_fare||0),ITServiceCost:Number(val('api_it_cost')||0),InfoServiceCost:Number(val('api_info_cost')||0),InsuranceCosts:Number(val('api_insurance')||0),Tax:Number(val('api_tax')||0),LoadingPlaceProvinceID:Number(val('api_origin_province')),OffLoadingPlaceProvinceID:Number(val('api_dest_province')),OriginLattitude:Number(val('api_origin_lat')),OriginLongitude:Number(val('api_origin_lon')),DestinationLattitude:Number(val('api_dest_lat')),DestinationLongitude:Number(val('api_dest_lon')),FreighterID:null};
-if(!window.BarbargNative){apiStatus(false,'پل ارتباطی بومی فعال نیست.');return}apiStatus(true,'در حال ارسال درخواست به UTCMS…');window.BarbargNative.issueBol(JSON.stringify(bol));
-}
+function apiStatus(ok,msg,trace){const el=$('apiStatus');if(el){el.className='status '+(ok?'ok':'bad');el.textContent=msg||'';}const dash=$('dashboardApi');if(dash)dash.textContent=msg||'';if(trace){const t=$('traceCode');if(t)t.textContent='کد رهگیری: '+trace;const d=$('dashboardTrace');if(d)d.textContent=trace;}}
+function parseList(raw){let x=raw;try{if(typeof x==='string')x=JSON.parse(x);if(x&&typeof x.d==='string')x=JSON.parse(x.d);else if(x&&x.d!==undefined)x=x.d;}catch(e){return [];}if(Array.isArray(x))return x;if(x&&Array.isArray(x.KeyValueCnt))return x.KeyValueCnt;if(x&&Array.isArray(x.Items))return x.Items;return [];}
+function fillSelect(id,items,kind){const el=$(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">انتخاب کنید</option>';items.forEach(x=>{let key,label;if(kind==='provinceCities'){key=x.CITYCODE??x.CityCode??x.Key;label=(x.CITYDESC??x.CityDesc??x.Value??'')+(x.PROVINCEDESC?' — '+x.PROVINCEDESC:'');}else{key=x.Key??x.GoodID??x.ID??x.Id;label=x.Value??x.GoodName??x.Description??x.Name??String(key??'');}if(key!==undefined&&key!==null&&String(key)!==''){const o=document.createElement('option');o.value=String(key);o.textContent=String(label);el.appendChild(o);}});if(old)el.value=old;}
+window.onBaseInfo=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;if(!r.success){$('baseInfoStatus').className='status bad';$('baseInfoStatus').textContent=r.kind+': '+r.data;return;}const rows=parseList(r.data);if(r.kind==='goods')fillSelect('api_good_id',rows,r.kind);if(r.kind==='goodTypes')fillSelect('api_good_type',rows,r.kind);if(r.kind==='packingTypes')fillSelect('api_packing_id',rows,r.kind);if(r.kind==='provinceCities'){fillSelect('api_origin_city',rows,r.kind);fillSelect('api_dest_city',rows,r.kind);}$('baseInfoStatus').className='status ok';$('baseInfoStatus').textContent='فهرست '+r.kind+' دریافت شد: '+rows.length+' مورد.';}catch(e){$('baseInfoStatus').className='status bad';$('baseInfoStatus').textContent='خطا در خواندن فهرست: '+e.message;}};
+function refreshBaseInfo(){if(!window.BarbargNative){apiStatus(false,'پل ارتباطی بومی فعال نیست');return;}$('baseInfoStatus').textContent='در حال دریافت فهرست‌های رسمی…';['goodTypes','loadingTypes','packingTypes','goods','provinceCities'].forEach(k=>window.BarbargNative.loadBaseInfo(k));}
+function renderHistory(){if(!window.BarbargNative)return;try{const rows=JSON.parse(window.BarbargNative.getBolHistory()||'[]'),host=$('dashboardHistory');if(!host)return;host.innerHTML='<div class="status ok">صدور موفق: '+rows.filter(x=>x.status==='ISSUED').length+'</div><div class="status bad">درخواست ناموفق: '+rows.filter(x=>x.status==='FAILED').length+'</div>';rows.slice(0,10).forEach(x=>{const el=document.createElement('div');el.className='item';el.textContent=(x.status==='ISSUED'?'موفق':'ناموفق')+' | '+(x.traceCode.startsWith('FAILED-')?'بدون کد رهگیری':x.traceCode)+' | '+new Date(x.createdAt).toLocaleString('fa-IR');host.appendChild(el);});}catch(e){}}
+window.onNativeResult=function(raw){try{const r=typeof raw==='string'?JSON.parse(raw):raw;apiStatus(r.success,r.message,r.traceCode);renderHistory();if(r.success&&r.message.indexOf('شروع حمل')>=0){if(window.bolTrackTimer)clearInterval(window.bolTrackTimer);window.bolTrackTimer=setInterval(()=>{if(window.BarbargNative)window.BarbargNative.sendTrack()},60000);}if(r.success&&r.message.indexOf('پایان حمل')>=0&&window.bolTrackTimer){clearInterval(window.bolTrackTimer);window.bolTrackTimer=null;}}catch(e){apiStatus(false,'پاسخ برنامه قابل خواندن نیست');}};
+function issueRealBol(){const v=get('vehicle'),d=get('driver'),c=get('cargo'),r=get('route'),num=x=>Number(String(x||'').replace(/,/g,'').trim());const req=[['پلاک',v.v_plate],['سریال پلاک',v.v_plaque_sn],['نوع پلاک',v.v_plaque_type],['شناسه مالک خودرو',v.v_owner_national],['کد ملی راننده',d.d_national],['موبایل راننده',d.d_phone],['فرستنده',r.s_name],['گیرنده',r.r_name],['مبدأ',r.rt_origin],['مقصد',r.rt_dest],['سریال سند',$('issue_serial').value],['کالا',c.api_good_id],['گروه کالا',c.api_good_type],['بسته‌بندی',c.api_packing_id],['وزن کیلوگرم',c.c_weight],['مقدار/تعداد',c.c_count],['کرایه',r.rt_fare],['شهر بارگیری',$('api_origin_city').value],['شهر تخلیه',$('api_dest_city').value]];const missing=req.filter(x=>!String(x[1]||'').trim()).map(x=>x[0]);if(missing.length){apiStatus(false,'اطلاعات ضروری ناقص است: '+missing.join('، '));return;}if(!window.BarbargNative){apiStatus(false,'پل ارتباطی بومی فعال نیست');return;}const serial=num($('issue_serial').value),weight=num(c.c_weight),qty=num(c.c_count),fare=num(r.rt_fare);if(!Number.isInteger(serial)||serial<=0||weight<=0||qty<=0||fare<0){apiStatus(false,'مقادیر عددی سریال، وزن، مقدار و کرایه معتبر نیستند');return;}const bol={PlaqueID:v.v_plate,PlaqueSN:num(v.v_plaque_sn),PlaqueType:v.v_plaque_type,DriverNationalCode:d.d_national,OWNERNATIONALID:v.v_owner_national,SenderType:num($('api_sender_type').value),SenderName:r.s_name,SenderLastName:r.s_family||'',SenderNationalID:'',SenderMobile:r.s_phone||'',SenderAddress:r.rt_origin,SenderCityCode:$('api_origin_city').value,RecieverType:num($('api_receiver_type').value),RecieverName:r.r_name,RecieverLastName:r.r_family||'',RecieverNationalID:'',RecieverMobile:r.r_phone||'',RecieverAddress:r.rt_dest,RecieverCityCode:$('api_dest_city').value,Freightage:fare,PreFreightage:num(r.rt_pre),FreightageTax:0,CompanyCommission:0,SerialNo:serial,ITServiceCost:0,InfoServiceCost:0,IssuerNaCode:d.d_national,IssuerMobile:d.d_phone,IssueDate:new Date().toISOString(),LoadingPlaceCityCode:$('api_origin_city').value,LoadingPlaceAddress:r.rt_origin,OffLoadingPlaceCityCode:$('api_dest_city').value,OffLoadingPlaceAddress:r.rt_dest,Goods:[{GoodID:num(c.api_good_id),WeightKg:weight,Value:qty,PackingTypeID:num(c.api_packing_id),GoodtypeID:num(c.api_good_type),Description:c.c_note||''}],TotalAmountPayment:fare,InsuranceCosts:num(c.api_insurance),OriginLattitude:0,OriginLongitude:0,DestinationLattitude:0,DestinationLongitude:0,DriverMobile:d.d_phone};apiStatus(true,'در حال ارسال درخواست به UTCMS…');window.BarbargNative.issueBol(JSON.stringify(bol));}
 function startRealTransport(){if(window.BarbargNative)window.BarbargNative.startTransport();else apiStatus(false,'اتصال بومی فعال نیست')}
 function trackRealTransport(){if(window.BarbargNative)window.BarbargNative.sendTrack();else apiStatus(false,'اتصال بومی فعال نیست')}
 function endRealTransport(){const no=Number(prompt('شماره رسید تحویل را وارد کنید:')||0);if(!no){apiStatus(false,'شماره رسید معتبر نیست');return}if(window.BarbargNative)window.BarbargNative.endTransport(no,Math.floor(Date.now()/1000));else apiStatus(false,'اتصال بومی فعال نیست')}
-load();
+load();renderHistory();
 </script>
 </body></html>
