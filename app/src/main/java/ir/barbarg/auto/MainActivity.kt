@@ -336,6 +336,9 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     try {
                         val bol = JSONObject(json)
+                        // DriverMobile is used locally to bind OTP verification to this driver;
+                        // it is not a member of the official BOLCnt payload.
+                        bol.remove("DriverMobile")
                         val result = api.insertBol(
                             UtcmsApi.Account(companyCode, servicePassword.copyOf()),
                             bol,
