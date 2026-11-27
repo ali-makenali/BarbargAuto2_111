@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         val company = BuildConfig.UTCMS_COMPANY_CODE.trim()
         val password = BuildConfig.UTCMS_SERVICE_PASSWORD.toCharArray()
         if (company.isBlank() || password.isEmpty()) {
-            password.fill('\u0000')
+            password.fill(0.toChar())
             return false
         }
         return try {
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {
             false
         } finally {
-            password.fill('\u0000')
+            password.fill(0.toChar())
         }
     }
 
@@ -123,18 +123,18 @@ class MainActivity : AppCompatActivity() {
                         ?: 0
                     if (result.success && id > 0) {
                         companyCode = credentials.companyCode
-                        servicePassword.fill('\u0000')
+                        servicePassword.fill(0.toChar())
                         servicePassword = secret.copyOf()
                         pendingIdNo = id
                         loginNationalCode = n
                         loginMobile = m
-                        secret.fill('\u0000')
-                        credentials.password.fill('\u0000')
+                        secret.fill(0.toChar())
+                        credentials.password.fill(0.toChar())
                         dlg.dismiss()
                         showOtpDialog()
                     } else {
-                        secret.fill('\u0000')
-                        credentials.password.fill('\u0000')
+                        secret.fill(0.toChar())
+                        credentials.password.fill(0.toChar())
                         dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                         help.text = result.errorMessage ?: ("پاسخ سرویس: " + (result.value ?: result.payload))
                     }
@@ -227,15 +227,15 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (localDb.isProfileVerified(nationalCode, mobile)) {
                     companyCode = credentials.companyCode
-                    servicePassword.fill('\u0000')
+                    servicePassword.fill(0.toChar())
                     servicePassword = credentials.password.copyOf()
-                    credentials.password.fill('\u0000')
+                    credentials.password.fill(0.toChar())
                     loginNationalCode = nationalCode
                     loginMobile = mobile
                     serviceAuthenticated = true
                     loadRequiredBaseInfo()
                 } else {
-                    credentials.password.fill('\u0000')
+                    credentials.password.fill(0.toChar())
                     showLoginDialog(nationalCode, mobile)
                 }
             }
@@ -302,9 +302,9 @@ class MainActivity : AppCompatActivity() {
                 if (national.isNotBlank() && mobile.isNotBlank() &&
                     localDb.isProfileVerified(national, mobile)) {
                     companyCode = credentials.companyCode
-                    servicePassword.fill('\u0000')
+                    servicePassword.fill(0.toChar())
                     servicePassword = credentials.password.copyOf()
-                    credentials.password.fill('\u0000')
+                    credentials.password.fill(0.toChar())
                     loginNationalCode = national
                     loginMobile = mobile
                     serviceAuthenticated = true
@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
                     pendingBolJson = null
                     if (queued != null) submitBol(queued)
                 } else {
-                    credentials.password.fill('\u0000')
+                    credentials.password.fill(0.toChar())
                     showLoginDialog(national, mobile)
                 }
             }
@@ -387,9 +387,9 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         companyCode = credentials.companyCode
-        servicePassword.fill('\u0000')
+        servicePassword.fill(0.toChar())
         servicePassword = credentials.password.copyOf()
-        credentials.password.fill('\u0000')
+        credentials.password.fill(0.toChar())
         return true
     }
 
@@ -461,7 +461,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        servicePassword.fill('\u0000')
+        servicePassword.fill(0.toChar())
         if (::localDb.isInitialized) localDb.close()
         dashboard?.stopLoading()
         dashboard?.removeJavascriptInterface("BarbargNative")
