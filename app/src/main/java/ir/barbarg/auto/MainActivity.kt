@@ -39,16 +39,19 @@ class MainActivity : AppCompatActivity() {
     private var pendingIdNo = 0
     private var dashboard: WebView? = null
     private var lastTraceCode = ""
+    private var serviceAuthenticated = false
+    private var pendingBolJson: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         localDb = LocalDatabase(this)
         credentialStore = ServiceCredentialStore(this)
-        if (credentialStore.hasCredentials()) showLoginDialog() else showServiceSetupDialog()
+        // ورود به خود اپلیکیشن آزاد است؛ احراز هویت UTCMS فقط هنگام اولین عملیات صدور انجام می‌شود.
+        openDashboard()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val web = dashboard
-                if (web != null && web.canGoBack()) web.goBack() else showLoginDialog()
+                if (web != null && web.canGoBack()) web.goBack() else finish()
             }
         })
     }
@@ -173,7 +176,11 @@ class MainActivity : AppCompatActivity() {
                     val result = api.authenticateOtp(UtcmsApi.Account(companyCode, servicePassword.copyOf()), pendingIdNo, otp)
                     if (result.success) {
                         localDb.saveVerifiedProfile(loginNationalCode, loginAccountType, loginMobile)
-                        dlg.dismiss(); openDashboard()
+                        dlg.dismiss()
+                        serviceAuthenticated = true
+                        val queued = pendingBolJson
+                        pendingBolJson = null
+                        if (queued != null) (dashboard?.let { UtcmsBridge() })?.submitBol(queued)
                     }
                     else {
                         dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
@@ -219,6 +226,21 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun issueBol(json: String) {
+            runOnUiThread {
+                pendingBolJson = json
+                if (serviceAuthenticated) {
+                    val queued = pendingBolJson
+                    pendingBolJson = null
+                    if (queued != null) submitBol(queued)
+                } else if (credentialStore.hasCredentials()) {
+                    showLoginDialog()
+                } else {
+                    showServiceSetupDialog()
+                }
+            }
+        }
+
+        private fun submitBol(json: String) {
             runOnUiThread {
                 val position = currentGps()
                 if (position == null) {
