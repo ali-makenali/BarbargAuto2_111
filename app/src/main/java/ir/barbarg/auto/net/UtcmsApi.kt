@@ -76,7 +76,7 @@ class UtcmsApi {
         mobile: String
     ): ApiResult {
         if (!isValidNationalCode(nationalCode)) {
-            return reject(account, "کد ملی/شناسه ملی باید ۱۰ یا ۱۱ رقم معتبر باشد")
+            return reject(account, "کد ملی راننده باید ۱۰ رقم معتبر باشد")
         }
         val mobileNumber = mobile.toLongOrNull()
         if (mobile.length != 11 || !mobile.startsWith("09") || mobileNumber == null) {
@@ -179,16 +179,12 @@ class UtcmsApi {
             return reject(account, "مختصات GPS معتبر نیست")
         }
 
-        val devicePoint = JSONObject()
-            .put("EventType", "SimplePoint")
-            .put("GPSStatus", 1)
-            .put("IOStatus", 0)
-            .put("EventTime", eventTime.toLong())
-            .put("EventPosition", JSONObject(eventPosition.toString()))
-        val positions = JSONObject().put("DeviceInfoCnt", org.json.JSONArray().put(devicePoint))
+        // UTCMS.BOL.WS guide defines WS06 arguments as BOLTraceCode,
+        // EventTime and EventPosition (GPSCnt); it does not accept BOLPositions.
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("BOLPositions", positions)
+            .put("EventTime", eventTime)
+            .put("EventPosition", JSONObject(eventPosition.toString()))
         return call("WS06_InsertBOLTrack", account, body)
     }
 
@@ -355,8 +351,8 @@ class UtcmsApi {
 
     private fun isValidNationalCode(code: String): Boolean {
         if (code.any { it !in '0'..'9' }) return false
-        // The UTCMS guide accepts 10- or 11-character national/identity codes.
-        if (code.length == 11) return true
+        // Driver login uses a natural person's 10-digit Iranian national code.
+        // Eleven-digit legal-entity identifiers must not be accepted as driver IDs.
         if (code.length != 10 || code.all { it == code[0] }) return false
 
         val check = code[9].digitToInt()

@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             box.addView(this)
         }
-        val company = field("شناسه حساب سرویس UTCMS")
+        val company = field("شناسه فنی حساب وب‌سرویس UTCMS")
         val pass = field("رمز حساب سرویس UTCMS", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
         val help = TextView(this).apply {
             text = "این مشخصات فقط یک‌بار برای اتصال امن برنامه به وب‌سرویس لازم است؛ در صفحه ورود راننده یا شرکت نمایش داده نمی‌شود."
@@ -95,19 +95,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun showLoginDialog() {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(42, 12, 42, 0) }
-        val accountType = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
-                listOf("ورود به‌عنوان راننده", "ورود به‌عنوان شرکت"))
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        }
-        box.addView(accountType)
         fun field(label: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(this).apply {
             hint = label
             inputType = type
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             box.addView(this)
         }
-        val national = field("کد ملی / شناسه ملی", InputType.TYPE_CLASS_NUMBER)
+        val national = field("کد ملی راننده", InputType.TYPE_CLASS_NUMBER)
         val mobile = field("شماره همراه ثبت‌شده در UTCMS", InputType.TYPE_CLASS_PHONE)
         val help = TextView(this).apply { text = "برای احراز هویت، کد ملی و شماره همراه ثبت‌شده را وارد کنید."; setPadding(0, 16, 0, 0) }
         box.addView(help)
@@ -128,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                     showServiceSetupDialog()
                     return@setOnClickListener
                 }
-                loginAccountType = if (accountType.selectedItemPosition == 0) "driver" else "company"
+                loginAccountType = "driver"
                 dlg.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                 help.text = "در حال درخواست کد یک‌بارمصرف از UTCMS…"
                 lifecycleScope.launch {
