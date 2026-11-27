@@ -49,7 +49,6 @@ class UtcmsApi {
 
         private val requiredBolFields = listOf(
             "PlaqueID",
-            "PlaqueSN",
             "PlaqueType",
             "DriverNationalCode",
             "OWNERNATIONALID",
@@ -57,7 +56,6 @@ class UtcmsApi {
             "SenderName",
             "RecieverType",
             "RecieverName",
-            "SerialNo",
             "IssuerNaCode",
             "IssueDate",
             "LoadingPlaceAddress",
