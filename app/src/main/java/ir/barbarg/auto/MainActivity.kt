@@ -21,7 +21,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
-import ir.barbarg.auto.data.LocalDatabase
+import ir.barbarg.auto.BuildConfig\nimport ir.barbarg.auto.data.LocalDatabase
 import ir.barbarg.auto.security.ServiceCredentialStore
 import ir.barbarg.auto.net.UtcmsApi
 import kotlinx.coroutines.launch
@@ -57,44 +57,25 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun showServiceSetupDialog() {
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(42, 12, 42, 0) }
-        fun field(label: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(this).apply {
-            hint = label
-            inputType = type
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            box.addView(this)
+    private fun provisionServiceCredentials(): Boolean {
+        val company = BuildConfig.UTCMS_COMPANY_CODE.trim()
+        val password = BuildConfig.UTCMS_SERVICE_PASSWORD.toCharArray()
+        if (company.isBlank() || password.isEmpty()) {
+            password.fill('\\u0000')
+            return false
         }
-        val company = field("شناسه فنی حساب وب‌سرویس UTCMS")
-        val pass = field("رمز حساب سرویس UTCMS", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
-        val help = TextView(this).apply {
-            text = "این مشخصات فقط یک‌بار برای اتصال امن برنامه به وب‌سرویس لازم است؛ در صفحه ورود راننده یا شرکت نمایش داده نمی‌شود."
-            setPadding(0, 16, 0, 0)
+        return try {
+            if (!credentialStore.hasCredentials()) credentialStore.save(company, password)
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            password.fill('\\u0000')
         }
-        box.addView(help)
-        val dlg = AlertDialog.Builder(this).setTitle("تنظیم اتصال سرویس").setView(box)
-            .setCancelable(false).setPositiveButton("ذخیره امن", null).create()
-        dlg.setOnShowListener {
-            dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val code = company.text.toString().trim()
-                val password = pass.text.toString().toCharArray()
-                if (code.isBlank() || password.isEmpty()) {
-                    help.text = "شناسه و رمز حساب سرویس الزامی است."
-                    password.fill('\u0000')
-                    return@setOnClickListener
-                }
-                try {
-                    credentialStore.save(code, password)
-                    dlg.dismiss()
-                    showLoginDialog()
-                } catch (e: Exception) {
-                    help.text = "ذخیره امن انجام نشد: " + (e.message ?: "")
-                } finally {
-                    password.fill('\u0000')
-                }
-            }
-        }
-        dlg.show()
+    }
+
+    private fun serviceSetupUnavailable() {
+        notifyPage(false, "اعتبارنامه وب‌سرویس در پیکربندی امن برنامه تنظیم نشده است. با مدیر سامانه تماس بگیرید؛ راننده نباید شناسه فنی یا رمز سرویس وارد کند.")
     }
 
     private fun showLoginDialog(prefillNational: String = "", prefillMobile: String = "") {
@@ -123,7 +104,7 @@ class MainActivity : AppCompatActivity() {
                 val credentials = credentialStore.load()
                 if (credentials == null) {
                     dlg.dismiss()
-                    showServiceSetupDialog()
+                    serviceSetupUnavailable()
                     return@setOnClickListener
                 }
                 loginAccountType = "driver"
@@ -239,7 +220,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val credentials = credentialStore.load()
                 if (credentials == null) {
-                    showServiceSetupDialog()
+                    serviceSetupUnavailable()
                     return@runOnUiThread
                 }
                 if (localDb.isProfileVerified(nationalCode, mobile)) {
@@ -313,7 +294,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val credentials = credentialStore.load()
                 if (credentials == null) {
-                    showServiceSetupDialog()
+                    serviceSetupUnavailable()
                     return@runOnUiThread
                 }
                 if (national.isNotBlank() && mobile.isNotBlank() &&
