@@ -272,12 +272,18 @@ class MainActivity : AppCompatActivity() {
                 val secret = servicePassword.copyOf()
                 lifecycleScope.launch {
                     val result = api.getBaseInfo(UtcmsApi.Account(companyCode, secret), kind)
-                    val data = if (result.success) {
-                        result.value ?: result.payload?.toString() ?: "[]"
+                    if (result.success) {
+                        val data = result.value ?: result.payload?.toString() ?: "[]"
+                        localDb.put("baseinfo", kind, JSONObject().put("raw", data))
+                        notifyBaseInfo(kind, true, data)
                     } else {
-                        result.errorMessage ?: result.value ?: "دریافت اطلاعات پایه ناموفق بود"
+                        val cached = localDb.get("baseinfo", kind)?.optString("raw")
+                        if (!cached.isNullOrBlank()) {
+                            notifyBaseInfo(kind, true, cached)
+                        } else {
+                            notifyBaseInfo(kind, false, result.errorMessage ?: result.value ?: "دریافت اطلاعات پایه ناموفق بود")
+                        }
                     }
-                    notifyBaseInfo(kind, result.success, data)
                 }
             }
         }
