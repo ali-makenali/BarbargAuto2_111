@@ -31,7 +31,20 @@ class UtcmsApi {
             "WS01_InsertBOL",
             "WS03_StartBOL",
             "WS04_EndBOL",
-            "WS06_InsertBOLTrack"
+            "WS06_InsertBOLTrack",
+            "WS31_GetBaseInfoGoodType",
+            "WS32_GetBaseInfoLoadingType",
+            "WS33_GetBaseInfoPackingType",
+            "WS34_GetBaseInfoGood",
+            "WS43_GetBaseInfoProvinceCity"
+        )
+
+        private val baseInfoMethods = mapOf(
+            "goodTypes" to "WS31_GetBaseInfoGoodType",
+            "loadingTypes" to "WS32_GetBaseInfoLoadingType",
+            "packingTypes" to "WS33_GetBaseInfoPackingType",
+            "goods" to "WS34_GetBaseInfoGood",
+            "provinceCities" to "WS43_GetBaseInfoProvinceCity"
         )
 
         private val requiredBolFields = listOf(
@@ -50,11 +63,7 @@ class UtcmsApi {
             "LoadingPlaceAddress",
             "OffLoadingPlaceAddress",
             "Goods",
-            "TotalAmountPayment", "Freightage", "PreFreightage", "FreightageTax",
-            "CompanyCommission", "ITServiceCost", "InfoServiceCost", "InsuranceCosts",
-            "Tax", "LoadingPlaceProvinceID", "OffLoadingPlaceProvinceID",
-            "OriginLattitude", "OriginLongitude", "DestinationLattitude",
-            "DestinationLongitude", "FreighterID"
+            "TotalAmountPayment", "Freightage", "InsuranceCosts"
         )
     }
 
@@ -68,6 +77,13 @@ class UtcmsApi {
         val errorCode: Int? = null,
         val httpCode: Int? = null
     )
+
+    /** Downloads official UTCMS reference lists; IDs are never fabricated in the app. */
+    suspend fun getBaseInfo(account: Account, kind: String): ApiResult {
+        val method = baseInfoMethods[kind]
+            ?: return reject(account, "نوع اطلاعات پایه ناشناخته است")
+        return call(method, account, JSONObject())
+    }
 
     /** WS39: NaCode is a string and MobileNo is a 64-bit integer. */
     suspend fun generateOtp(
