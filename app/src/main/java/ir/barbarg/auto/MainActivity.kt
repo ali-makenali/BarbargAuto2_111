@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
         val help = TextView(this).apply { text = "برای احراز هویت، کد ملی و شماره همراه ثبت‌شده را وارد کنید."; setPadding(0, 16, 0, 0) }
         box.addView(help)
         val dlg = AlertDialog.Builder(this).setTitle("ورود و احراز هویت").setView(box)
-            .setCancelable(false).setNegativeButton("تنظیم اتصال") { _, _ -> showServiceSetupDialog() }
+            .setCancelable(false)
             .setPositiveButton("دریافت کد تأیید", null).create()
         dlg.setOnShowListener {
             dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -381,7 +381,7 @@ class MainActivity : AppCompatActivity() {
         if (companyCode.isNotBlank() && servicePassword.isNotEmpty()) return true
         val credentials = try { credentialStore.load() } catch (_: Exception) { null }
         if (credentials == null) {
-            showServiceSetupDialog()
+            serviceSetupUnavailable()
             return false
         }
         companyCode = credentials.companyCode
