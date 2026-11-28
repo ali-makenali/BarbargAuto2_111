@@ -379,6 +379,35 @@ class MainActivity : AppCompatActivity() {
             "route" -> "routes"
             else -> return
         }
+        val mapped = cloudRecord(type, key, record) ?: return
+        lifecycleScope.launch { supabaseSession.sync(entity, "upsert", mapped) }
+    }
+
+    private fun syncExistingLocalData() {
+        lifecycleScope.launch {
+            val mapping = listOf("vehicle" to "vehicles", "driver" to "drivers", "cargo" to "cargo", "route" to "routes")
+            mapping.forEach { (type, entity) ->
+                // Push local changes first, then restore cloud-only records to this device.
+                val rows = localDb.all(type)
+                for (i in 0 until rows.length()) {
+                    val row = rows.optJSONObject(i) ?: continue
+                    val key = row.optString("key")
+                    val data = row.optJSONObject("data") ?: continue
+                    val mapped = cloudRecord(type, key, data)
+                    if (mapped != null) supabaseSession.sync(entity, "upsert", mapped)
+                }
+                val remote = supabaseSession.list(entity) ?: return@forEach
+                for (i in 0 until remote.length()) {
+                    val row = remote.optJSONObject(i) ?: continue
+                    val key = row.optString("local_key")
+                    val metadata = row.optJSONObject("metadata") ?: continue
+                    if (key.isNotBlank() && localDb.get(type, key) == null) localDb.put(type, key, metadata)
+                }
+            }
+        }
+    }
+
+    private fun cloudRecord(type: String, key: String, record: JSONObject): JSONObject? {
         val mapped = JSONObject()
         when (type) {
             "vehicle" -> {
@@ -399,24 +428,10 @@ class MainActivity : AppCompatActivity() {
                 if (record.has("origin")) mapped.put("origin", record.get("origin"))
                 if (record.has("destination")) mapped.put("destination", record.get("destination"))
             }
+            else -> return null
         }
         mapped.put("metadata", record)
-        lifecycleScope.launch { supabaseSession.sync(entity, "upsert", mapped) }
-    }
-
-    private fun syncExistingLocalData() {
-        lifecycleScope.launch {
-            val mapping = listOf("vehicle" to "vehicles", "driver" to "drivers", "cargo" to "cargo", "route" to "routes")
-            mapping.forEach { (type, _) ->
-                val rows = localDb.all(type)
-                for (i in 0 until rows.length()) {
-                    val row = rows.optJSONObject(i) ?: continue
-                    val key = row.optString("key")
-                    val data = row.optJSONObject("data") ?: continue
-                    syncLocalRecord(type, key, data)
-                }
-            }
-        }
+        return mapped
     }
 
     private fun syncBolIssuance(trace: String, request: JSONObject, response: JSONObject, status: String) {
