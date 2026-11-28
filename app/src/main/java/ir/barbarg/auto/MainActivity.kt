@@ -225,19 +225,11 @@ class MainActivity : AppCompatActivity() {
                     serviceSetupUnavailable()
                     return@runOnUiThread
                 }
-                if (localDb.isProfileVerified(nationalCode, mobile)) {
-                    companyCode = credentials.companyCode
-                    servicePassword.fill(0.toChar())
-                    servicePassword = credentials.password.copyOf()
-                    credentials.password.fill(0.toChar())
-                    loginNationalCode = nationalCode
-                    loginMobile = mobile
-                    serviceAuthenticated = true
-                    loadRequiredBaseInfo()
-                } else {
-                    credentials.password.fill(0.toChar())
-                    showLoginDialog(nationalCode, mobile)
-                }
+                // A locally cached profile is not proof of a current UTCMS session.
+                // Require OTP after every fresh app process; never bypass authentication
+                // merely because this driver was verified on an earlier installation session.
+                credentials.password.fill(0.toChar())
+                showLoginDialog(nationalCode, mobile)
             }
         }
 
@@ -299,23 +291,10 @@ class MainActivity : AppCompatActivity() {
                     serviceSetupUnavailable()
                     return@runOnUiThread
                 }
-                if (national.isNotBlank() && mobile.isNotBlank() &&
-                    localDb.isProfileVerified(national, mobile)) {
-                    companyCode = credentials.companyCode
-                    servicePassword.fill(0.toChar())
-                    servicePassword = credentials.password.copyOf()
-                    credentials.password.fill(0.toChar())
-                    loginNationalCode = national
-                    loginMobile = mobile
-                    serviceAuthenticated = true
-                    loadRequiredBaseInfo()
-                    val queued = pendingBolJson
-                    pendingBolJson = null
-                    if (queued != null) submitBol(queued)
-                } else {
-                    credentials.password.fill(0.toChar())
-                    showLoginDialog(national, mobile)
-                }
+                // Do not reuse a profile's historical verification as a live session.
+                // The driver must complete UTCMS OTP authentication before each new session.
+                credentials.password.fill(0.toChar())
+                showLoginDialog(national, mobile)
             }
         }
 
