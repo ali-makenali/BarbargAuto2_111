@@ -176,7 +176,7 @@ class UtcmsApi {
 
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("StartTime", startTime)
+            .put("StartDate", startTime)
             .put("StartPosition", JSONObject(startPosition.toString()))
         return call("WS03_StartBOL", account, body)
     }
@@ -194,20 +194,11 @@ class UtcmsApi {
             return reject(account, "مختصات GPS معتبر نیست")
         }
 
-        // The supplied ITMBOL WSDL defines WS06 as BOLTraceCode plus
-        // BOLPositions: ArrayOfDeviceInfoCnt (DeviceInfoCnt[]).
-        val point = JSONObject()
-            .put("EventType", "SimplePoint")
-            .put("GPSStatus", 0)
-            .put("IOStatus", 0)
-            .put("EventTime", eventTime.toLong())
-            .put("EventPosition", JSONObject(eventPosition.toString()))
+        // The official ITMBOL guide defines WS06 with these exact arguments.
         val body = JSONObject()
             .put("BOLTraceCode", traceCode)
-            .put("BOLPositions", JSONObject().put(
-                "DeviceInfoCnt",
-                JSONArray().put(point)
-            ))
+            .put("EventTime", eventTime)
+            .put("EventPosition", JSONObject(eventPosition.toString()))
         return call("WS06_InsertBOLTrack", account, body)
     }
 
