@@ -102,13 +102,16 @@ class SupabaseSession(private val context: Context) {
         return android.util.Base64.encodeToString(encrypted, android.util.Base64.NO_WRAP)
     }
 
-    private fun decrypt(value: String?): String? = try {
-        if (value.isNullOrBlank()) return null
-        val all = android.util.Base64.decode(value, android.util.Base64.NO_WRAP)
-        val iv = all.copyOfRange(0, 12)
-        val data = all.copyOfRange(12, all.size)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
-        String(cipher.doFinal(data), Charsets.UTF_8)
-    } catch (_: Exception) { null }
+    private fun decrypt(value: String?): String? {
+        return try {
+            if (value.isNullOrBlank()) null else {
+                val all = android.util.Base64.decode(value, android.util.Base64.NO_WRAP)
+                val iv = all.copyOfRange(0, 12)
+                val data = all.copyOfRange(12, all.size)
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
+                String(cipher.doFinal(data), Charsets.UTF_8)
+            }
+        } catch (_: Exception) { null }
+    }
 }
