@@ -39,6 +39,15 @@ class SupabaseSession(private val context: Context) {
             } catch (_: Exception) { false }
         }
 
+    suspend fun list(entity: String): org.json.JSONArray? = withContext(Dispatchers.IO) {
+        try {
+            val token = validAccessToken() ?: return@withContext null
+            val response = request("$base/functions/v1/barbarg-sync", "POST",
+                JSONObject().put("entity", entity).put("action", "list"), token)
+            response.optJSONArray("data")
+        } catch (_: Exception) { null }
+    }
+
     private fun validAccessToken(): String? {
         val refresh = decrypt(prefs.getString("refresh", null)) ?: return createAnonymousSession()?.access
         val access = decrypt(prefs.getString("access", null))
