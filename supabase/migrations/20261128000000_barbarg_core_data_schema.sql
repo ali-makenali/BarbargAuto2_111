@@ -49,3 +49,6 @@ grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update, delete on public.vehicles, public.drivers, public.cargo_items, public.routes to authenticated;
 grant select, insert, update on public.bol_issuances to authenticated;
 grant select, insert on public.audit_events to authenticated;
+
+create unique index if not exists cargo_items_owner_local_key_uidx on public.cargo_items(owner_id, local_key) where local_key is not null;
+create unique index if not exists routes_owner_local_key_uidx on public.routes(owner_id, local_key) where local_key is not null;
