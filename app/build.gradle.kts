@@ -20,6 +20,9 @@ android {
         val utcPassword = providers.gradleProperty("UTCMS_SERVICE_PASSWORD").orNull ?: ""
         buildConfigField("String", "UTCMS_COMPANY_CODE", "\"${utcCompany}\"")
         buildConfigField("String", "UTCMS_SERVICE_PASSWORD", "\"${utcPassword}\"")
+        // Supabase publishable key is designed for client use; RLS protects user data.
+        buildConfigField("String", "SUPABASE_URL", "\"https://ufejrknhkwrtvfesxbbp.supabase.co\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"sb_publishable_2NKIDYuRSCD4KFyFgW7RdA_TIuNr1r9\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
