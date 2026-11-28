@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import ir.barbarg.auto.BuildConfig
 import ir.barbarg.auto.data.LocalDatabase
+import ir.barbarg.auto.data.SupabaseSession
 import ir.barbarg.auto.security.ServiceCredentialStore
 import ir.barbarg.auto.net.UtcmsApi
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ import org.json.JSONObject
 class MainActivity : AppCompatActivity() {
     private val api = UtcmsApi()
     private lateinit var localDb: LocalDatabase
+    private lateinit var supabaseSession: SupabaseSession
     private lateinit var credentialStore: ServiceCredentialStore
     private var loginNationalCode = ""
     private var loginMobile = ""
@@ -46,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         localDb = LocalDatabase(this)
+        supabaseSession = SupabaseSession(this)
         credentialStore = ServiceCredentialStore(this)
         provisionServiceCredentials()
         lastTraceCode = localDb.latestIssuedTrace()
@@ -162,6 +165,7 @@ class MainActivity : AppCompatActivity() {
                         localDb.saveVerifiedProfile(loginNationalCode, loginAccountType, loginMobile)
                         dlg.dismiss()
                         serviceAuthenticated = true
+                        syncExistingLocalData()
                         val queued = pendingBolJson
                         pendingBolJson = null
                         (dashboard?.let { UtcmsBridge() })?.loadRequiredBaseInfo()
@@ -198,8 +202,14 @@ class MainActivity : AppCompatActivity() {
 
     private inner class UtcmsBridge {
         @JavascriptInterface
-        fun saveLocalRecord(type: String, key: String, json: String): Boolean =
-            try { localDb.put(type, key, JSONObject(json)) } catch (_: Exception) { false }
+        fun saveLocalRecord(type: String, key: String, json: String): Boolean {
+            return try {
+                val record = JSONObject(json)
+                val saved = localDb.put(type, key, record)
+                if (saved && serviceAuthenticated) syncLocalRecord(type, key, record)
+                saved
+            } catch (_: Exception) { false }
+        }
 
         @JavascriptInterface
         fun listLocalRecords(type: String): String =
@@ -321,7 +331,9 @@ class MainActivity : AppCompatActivity() {
                             ?: result.payload?.optString("TraceCode")?.takeIf { it.isNotBlank() }
                         if (result.success && !trace.isNullOrBlank()) {
                             lastTraceCode = trace
-                            localDb.saveBol(trace, bol, result.payload ?: JSONObject().put("value", result.value ?: ""), "ISSUED")
+                            val response = result.payload ?: JSONObject().put("value", result.value ?: "")
+                            localDb.saveBol(trace, bol, response, "ISSUED")
+                            syncBolIssuance(trace, bol, response, "ISSUED")
                             notifyPage(true, "باربرگ صادر شد. کد رهگیری: " + trace, trace)
                         } else {
                             val failure = JSONObject()
@@ -330,6 +342,7 @@ class MainActivity : AppCompatActivity() {
                                 .put("httpCode", result.httpCode ?: JSONObject.NULL)
                                 .put("raw", result.value ?: result.payload?.toString() ?: "")
                             localDb.saveBolFailure(bol, failure)
+                            syncBolIssuance("", bol, failure, "FAILED")
                             notifyPage(false, result.errorMessage ?: ("پاسخ صدور: " + (result.value ?: result.payload)))
                         }
                     } catch (e: Exception) {
@@ -356,6 +369,64 @@ class MainActivity : AppCompatActivity() {
             api.endBol(UtcmsApi.Account(companyCode, servicePassword.copyOf()), lastTraceCode,
                 receiptNo, receiptTime, (System.currentTimeMillis() / 1000L).toInt(), gps)
         }
+    }
+
+    private fun syncLocalRecord(type: String, key: String, record: JSONObject) {
+        val entity = when (type) {
+            "vehicle" -> "vehicles"
+            "driver" -> "drivers"
+            "cargo" -> "cargo"
+            "route" -> "routes"
+            else -> return
+        }
+        val mapped = JSONObject()
+        when (type) {
+            "vehicle" -> {
+                mapped.put("local_key", key).put("plate_id", key)
+                listOf("plate_type", "vehicle_type", "capacity").forEach { if (record.has(it)) mapped.put(it, record.get(it)) }
+            }
+            "driver" -> {
+                mapped.put("local_key", key).put("national_code", key)
+                listOf("mobile", "full_name").forEach { if (record.has(it)) mapped.put(it, record.get(it)) }
+            }
+            "cargo" -> {
+                mapped.put("local_key", key)
+                mapped.put("title", record.optString("c_name", record.optString("title", key)))
+                if (record.has("goods_code")) mapped.put("goods_code", record.get("goods_code"))
+            }
+            "route" -> {
+                mapped.put("local_key", key)
+                if (record.has("origin")) mapped.put("origin", record.get("origin"))
+                if (record.has("destination")) mapped.put("destination", record.get("destination"))
+            }
+        }
+        mapped.put("metadata", record)
+        lifecycleScope.launch { supabaseSession.sync(entity, "upsert", mapped) }
+    }
+
+    private fun syncExistingLocalData() {
+        lifecycleScope.launch {
+            val mapping = listOf("vehicle" to "vehicles", "driver" to "drivers", "cargo" to "cargo", "route" to "routes")
+            mapping.forEach { (type, _) ->
+                val rows = localDb.all(type)
+                for (i in 0 until rows.length()) {
+                    val row = rows.optJSONObject(i) ?: continue
+                    val key = row.optString("key")
+                    val data = row.optJSONObject("data") ?: continue
+                    syncLocalRecord(type, key, data)
+                }
+            }
+        }
+    }
+
+    private fun syncBolIssuance(trace: String, request: JSONObject, response: JSONObject, status: String) {
+        val payload = JSONObject()
+            .put("local_trace_code", trace.ifBlank { "LOCAL-" + System.currentTimeMillis() })
+            .put("status", status)
+            .put("request_payload", request)
+            .put("response_payload", response)
+        if (trace.isNotBlank()) payload.put("trace_code", trace)
+        lifecycleScope.launch { supabaseSession.sync("bol", "upsert", payload) }
     }
 
     private fun ensureServiceCredentials(): Boolean {
